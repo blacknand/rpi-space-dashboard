@@ -10,7 +10,7 @@ class BME280App(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         bme_results = bme280_results()
-        self.bme_temp = bme_results[0]
+        self.bme_temp = f"TMP: {bme_results[0]}"
         self.bme_humidity = f"RM: {bme_results[1]}"
         self.bme_pressure = f"Pb: {bme_results[2]}"
         self.bme_altitude = f"ALT: {bme_results[3]}"
@@ -33,7 +33,7 @@ class BME280App(App):
     
     def update_bme_data(self, dt):
         bme_results = bme280_results()
-        self.bme_temp = bme_results[0]
+        self.bme_temp = f"TMP: {bme_results[0]}"
         self.bme_humidity = f"RM: {bme_results[1]}"
         self.bme_pressure = f"Pb: {bme_results[2]}"
         self.bme_altitude = f"ALT: {bme_results[3]}"
