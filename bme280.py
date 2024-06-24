@@ -13,10 +13,10 @@ c = 243.12
 gamma = (b * bme280.temperature / (c + bme280.temperature)) + math.log(bme280.humidity / 100.0)
 dewpoint = format((c * gamma) / (b * gamma), ".2f")
 
-while True:
-    print("\nTemperature: %0.1f C" % bme280.temperature)
-    print("Humidity: %0.1f %%" % bme280.relative_humidity)
-    print("Pressure: %0.1f hPa" % bme280.pressure)
-    print("Altitude = %0.2f meters" % bme280.altitude)
-    print(f"Dew point: {dewpoint}")
-    time.sleep(1)
+def bme280_results():
+    temp = "Temperature: %0.1f C" % bme280.temperature
+    humidity = "Humidity: %0.1f %%" % bme280.relative_humidity
+    pressure = "Pressure: %0.1f hPa" % bme280.pressure
+    altitude = "Altitude = %0.2f meters" % bme280.altitude
+    dew_point = f"Dew point: {dewpoint}"
+    return [temp, humidity, pressure, altitude, dew_point]
