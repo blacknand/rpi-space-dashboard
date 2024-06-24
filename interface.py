@@ -5,6 +5,7 @@ from kivy.uix.label import Label
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from bme280 import bme280_results
+from kivy.core.window import Window
 
 class BME280App(App):
     def __init__(self, **kwargs):
@@ -22,6 +23,7 @@ class BME280App(App):
         self.bme_dewpoint_label = Label(text=str(self.bme_dew_point))
 
     def build(self):
+        Window.show_cursor = False
         layout = BoxLayout(orientation='horizontal')
         layout.add_widget(self.bme_temp_label)
         layout.add_widget(self.bme_humidity_label)
