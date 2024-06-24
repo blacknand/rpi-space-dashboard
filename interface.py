@@ -11,10 +11,10 @@ class BME280App(App):
         super().__init__(**kwargs)
         bme_results = bme280_results()
         self.bme_temp = bme_results[0]
-        self.bme_humidity = f"{bme_results[1]} % 💧"
-        self.bme_pressure = f"{bme_results[2]} 🌦️"
-        self.bme_altitude = f"{bme_results[3]}"
-        self.bme_dew_point = f"{bme_results[-1]} ❄️"
+        self.bme_humidity = f"RM: {bme_results[1]}"
+        self.bme_pressure = f"Pb: {bme_results[2]}"
+        self.bme_altitude = f"ALT: {bme_results[3]}"
+        self.bme_dew_point = f"DWPNT: {bme_results[-1]}"
         self.bme_temp_label = Label(text=str(self.bme_temp))
         self.bme_humidity_label = Label(text=str(self.bme_humidity))
         self.bme_pressure_label = Label(text=str(self.bme_pressure))
@@ -34,10 +34,10 @@ class BME280App(App):
     def update_bme_data(self, dt):
         bme_results = bme280_results()
         self.bme_temp = bme_results[0]
-        self.bme_humidity = f"{bme_results[1]} % 💧"
-        self.bme_pressure = f"{bme_results[2]} 🌦️"
-        self.bme_altitude = f"{bme_results[3]}"
-        self.bme_dew_point = f"{bme_results[-1]} ❄️"
+        self.bme_humidity = f"RM: {bme_results[1]}"
+        self.bme_pressure = f"Pb: {bme_results[2]}"
+        self.bme_altitude = f"ALT: {bme_results[3]}"
+        self.bme_dew_point = f"DWPNT: {bme_results[-1]}"
         self.bme_temp_label.text = str(self.bme_temp)
         self.bme_humidity_label = str(self.bme_humidity)
         self.bme_pressure_label = str(self.bme_pressure)
