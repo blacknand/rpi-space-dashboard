@@ -15,34 +15,34 @@ class BME280App(App):
         self.bme_pressure = f"{bme_results[2]} 🌦️"
         self.bme_altitude = f"{bme_results[3]}"
         self.bme_dew_point = f"{bme_results[-1]} ❄️"
-        self.bme_temp_label(text=str(self.bme_temp))
-        self.bme_humidity_label(text=str(self.bme_humidity))
-        self.bme_pressure_label(text=str(self.bme_pressure))
-        self.bme_altitude_label(text=str(self.bme_altitude))
-        self.bme_dewpoint_label(text=str(self.bme_dew_point))
+        self.bme_temp_label = Label(text=str(self.bme_temp))
+        self.bme_humidity_label = Label(text=str(self.bme_humidity))
+        self.bme_pressure_label = Label(text=str(self.bme_pressure))
+        self.bme_altitude_label = Label(text=str(self.bme_altitude))
+        self.bme_dewpoint_label = Label(text=str(self.bme_dew_point))
 
     def build(self):
         layout = BoxLayout(orientation='horizontal')
         layout.add_widget(self.bme_temp_label)
-        layout.add_widget(self.humidity_label)
-        layout.add_widget(self.pressure_label)
-        layout.add_widget(self.altitude_label)
-        layout.add_widget(self.dew_point_label)
+        layout.add_widget(self.bme_humidity_label)
+        layout.add_widget(self.bme_pressure_label)
+        layout.add_widget(self.bme_altitude_label)
+        layout.add_widget(self.bme_dewpoint_label)
         Clock.schedule_interval(self.update_bme_data, 1)
         return layout
     
-    def update_bme_data(self):
+    def update_bme_data(self, dt):
         bme_results = bme280_results()
         self.bme_temp = bme_results[0]
         self.bme_humidity = f"{bme_results[1]} % 💧"
         self.bme_pressure = f"{bme_results[2]} 🌦️"
         self.bme_altitude = f"{bme_results[3]}"
         self.bme_dew_point = f"{bme_results[-1]} ❄️"
-        self.bme_temp_label(text=str(self.bme_temp))
-        self.bme_humidity_label(text=str(self.bme_humidity))
-        self.bme_pressure_label(text=str(self.bme_pressure))
-        self.bme_altitude_label(text=str(self.bme_altitude))
-        self.bme_dewpoint_label(text=str(self.bme_dew_point))
+        self.bme_temp_label.text = str(self.bme_temp)
+        self.bme_humidity_label = str(self.bme_humidity)
+        self.bme_pressure_label = str(self.bme_pressure)
+        self.bme_altitude_label = str(self.bme_altitude)
+        self.bme_dewpoint_label = str(self.bme_dew_point)
 
     
 if __name__ == "__main__":
