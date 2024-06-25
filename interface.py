@@ -14,12 +14,10 @@ class BME280App(App):
         self.bme_temp = f"TMP: {bme_results[0]}"
         self.bme_humidity = f"RM: {bme_results[1]}"
         self.bme_pressure = f"Pb: {bme_results[2]}"
-        self.bme_altitude = f"ALT: {bme_results[3]}"
         self.bme_dew_point = f"DWPNT: {bme_results[-1]}"
         self.bme_temp_label = Label(text=str(self.bme_temp))
         self.bme_humidity_label = Label(text=str(self.bme_humidity))
         self.bme_pressure_label = Label(text=str(self.bme_pressure))
-        self.bme_altitude_label = Label(text=str(self.bme_altitude))
         self.bme_dewpoint_label = Label(text=str(self.bme_dew_point))
 
     def build(self):
@@ -28,7 +26,6 @@ class BME280App(App):
         layout.add_widget(self.bme_temp_label)
         layout.add_widget(self.bme_humidity_label)
         layout.add_widget(self.bme_pressure_label)
-        layout.add_widget(self.bme_altitude_label)
         layout.add_widget(self.bme_dewpoint_label)
         Clock.schedule_interval(self.update_bme_data, 1)
         return layout
@@ -38,12 +35,10 @@ class BME280App(App):
         self.bme_temp = f"TMP: {bme_results[0]}"
         self.bme_humidity = f"RM: {bme_results[1]}"
         self.bme_pressure = f"Pb: {bme_results[2]}"
-        self.bme_altitude = f"ALT: {bme_results[3]}"
         self.bme_dew_point = f"DWPNT: {bme_results[-1]}"
         self.bme_temp_label.text = str(self.bme_temp)
         self.bme_humidity_label = str(self.bme_humidity)
         self.bme_pressure_label = str(self.bme_pressure)
-        self.bme_altitude_label = str(self.bme_altitude)
         self.bme_dewpoint_label = str(self.bme_dew_point)
 
     
