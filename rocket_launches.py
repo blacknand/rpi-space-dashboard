@@ -39,18 +39,13 @@ class RocketLaunchesData:
         pass
 
     def json_test_filter(self, json_file: str) ->json:
+        # Test querying JSON file to prevent usage of API queries (15 per hour)
         open_json_file = open(json_file)
-        json_data = json.load(open_json_file)
-        json_data = json.dumps(json_data)                                       # Convert to dict to handle null values
-        return {self.catch_json_error(lambda: json_data["results"][key]) for key in json_data["results"]}
+        json_file_data = json.loads(open_json_file.read())
+        # name = [result["name"] for result in json_file_data["results"]]
+        # lsp_name = [result["lsp_name"] for result in json_file_data["results"]]
+        return [(result["name"], result["lsp_name"]) for result in json_file_data["results"]]
 
-
-    # https://stackoverflow.com/questions/27140090/how-can-json-data-with-null-value-be-converted-to-a-dictionary
-    def catch_json_error(func, *args, handle=lambda e : e, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            return handle(e)
 
 launch_base_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
 filters = "limit=25&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
@@ -58,7 +53,14 @@ test_url = f"{launch_base_url}?{filters}"
 
 test_obj = RocketLaunchesData(test_url)
 test_results = test_obj.json_test_filter(sys.argv[1])
-# print(test_obj.catch_json_error(test_results))
+print(test_results)
+
+
+
+
+
+
+
 
 
 # query_results = rocket_query_results(test_url)
