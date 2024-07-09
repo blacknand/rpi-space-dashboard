@@ -6,11 +6,14 @@ https://ll.thespacedevs.com/2.2.0/swagger/#/launch/launch_upcoming_list
 import requests
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 
 class RocketLaunchesData:
     def __init__(self, query_url: str):
         self.query_url = query_url
-        self.query_results = None                                           # Initial state
+        self.query_results = None                                  
+        self.filtered_results = None
+        self.filtered_test_results = None
 
     def rocket_query_results(self) -> dict or None:
         try:
@@ -35,15 +38,17 @@ class RocketLaunchesData:
             print(f"RocketLaunchesData::json_file_dump: Exception has occured: {e}")
 
     def get_filtered_results(self) -> json:
-        return [(result["name"], result["lsp_name"]) for result in self.query_results["results"]]
+        self.filtered_results = [(result["name"], result["lsp_name"]) for result in self.query_results["results"]]
+        return self.filtered_results
 
-    def json_test_filter(self, json_file: str) ->json:
+    def json_test_filter(self, json_file: str) -> json:
         # Test querying JSON file to prevent usage of API queries (15 per hour)
         open_json_file = open(json_file)
         json_file_data = json.loads(open_json_file.read())
-        return [(result["name"], result["lsp_name"]) for result in json_file_data["results"]]
+        self.filtered_test_results = [(result["name"], result["lsp_name"], result["status"]["abbrev"], result["image"], result["net"]) for result in json_file_data["results"]]
+        return self.filtered_test_results
     
-    def check_request_usage(self) -> str:
+    def check_request_usage(self) -> json:
         # Check the number of queries made to LL2 API per hour
         try:
             api_throttle_results = requests.get("https://ll.thespacedevs.com/2.2.0/api-throttle/")
@@ -53,34 +58,51 @@ class RocketLaunchesData:
             return None
         else:
             return api_throttle_results.json()
+        
+    def updated_net(self) -> str:
+        current_time = datetime.now(timezone.utc)
+        updated_results = []
+        for i in self.filtered_test_results:
+            launch_time = datetime.strptime(i[-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            time_difference = launch_time - current_time
+            if time_difference.total_seconds() < 0:
+                launch_time += timedelta(minutes=15)
+                time_difference = launch_time - current_time
+            
+            updated_results.append({
+                "name": i[0],
+                "organization": i[1],
+                "status": i[2],
+                "image": i[3],
+                "net": launch_time.isoformat(),
+                "countdown": self.format_countdown(time_difference)
+            })
 
+        return updated_results
+
+    def format_countdown(self, time_difference):
+        days, seconds = time_difference.days, time_difference.seconds
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        seconds = seconds % 60
+        microseconds = time_difference.microseconds
+
+        return {
+            "days": days,
+            "hours": hours,
+            "minutes": minutes,
+            "seconds": seconds,
+            "microseconds": microseconds
+        }
 
 
 launch_base_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
 filters = "limit=25&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
 test_url = f"{launch_base_url}?{filters}"
-
 test_obj = RocketLaunchesData(test_url)
-print(test_obj.check_request_usage())
-
-
-
-
-
-
-
-
-
-
-# query_results = rocket_query_results(test_url)
-# if not query_results:
-#     quit()                                          # TODO: Thorough error handling
-
-# with open('ll2data.json', 'w', encoding='utf-8') as f:
-#     json.dump(query_results, f, ensure_ascii=False, indent=4)
-
-# for result in query_results["results"]:
-#     # print(f"{result["name"]}\n\n")
-#     print(f"{result}\n\n\n\n\n")
-
-# print(sys.argv[1])
+# test_obj.rocket_query_results()
+# test_obj.json_file_dump(sys.argv[1])
+# print(test_obj.json_test_filter(sys.argv[1]))
+test_obj.json_test_filter(sys.argv[1])
+print(test_obj.updated_net())
+# print(test_obj.check_request_usage())
