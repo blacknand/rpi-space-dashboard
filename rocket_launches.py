@@ -68,15 +68,16 @@ class RocketLaunchesData:
             if time_difference.total_seconds() < 0:
                 launch_time += timedelta(minutes=15)
                 time_difference = launch_time - current_time
-            
-            updated_results.append({
-                "name": i[0],
-                "organization": i[1],
-                "status": i[2],
-                "image": i[3],
-                "net": launch_time.isoformat(),
-                "countdown": self.format_countdown(time_difference)
-            })
+
+            if current_time - launch_time <= timedelta(minutes=15):
+                updated_results.append({
+                    "name": i[0],
+                    "organization": i[1],
+                    "status": i[2],
+                    "image": i[3],
+                    "net": launch_time.isoformat(),
+                    "countdown": self.format_countdown(time_difference)
+                })
 
         return updated_results
 
@@ -85,15 +86,17 @@ class RocketLaunchesData:
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
         seconds = seconds % 60
-        microseconds = time_difference.microseconds
 
         return {
             "days": days,
             "hours": hours,
             "minutes": minutes,
-            "seconds": seconds,
-            "microseconds": microseconds
+            "seconds": seconds
         }
+
+
+    
+    # TODO: T+ time, if days > 0 && minute >= 15
 
 
 launch_base_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
@@ -104,5 +107,12 @@ test_obj = RocketLaunchesData(test_url)
 # test_obj.json_file_dump(sys.argv[1])
 # print(test_obj.json_test_filter(sys.argv[1]))
 test_obj.json_test_filter(sys.argv[1])
-print(test_obj.updated_net())
+# countdown = test_obj.updated_net()[0]["countdown"]
+# print(countdown)
+# # print(test_obj.updated_net()[0]["countdown"])
+# if countdown["days"] < 0 and countdown["minutes"] >= 15:
+#     print("fuyck")
+while True:
+    print(test_obj.updated_net())
+    print("")
 # print(test_obj.check_request_usage())
