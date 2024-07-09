@@ -35,16 +35,25 @@ class RocketLaunchesData:
             print(f"RocketLaunchesData::json_file_dump: Exception has occured: {e}")
 
     def get_filtered_results(self) -> json:
-        # filtered_data = {launch_key: self.query_results["results"]} 
-        pass
+        return [(result["name"], result["lsp_name"]) for result in self.query_results["results"]]
 
     def json_test_filter(self, json_file: str) ->json:
         # Test querying JSON file to prevent usage of API queries (15 per hour)
         open_json_file = open(json_file)
         json_file_data = json.loads(open_json_file.read())
-        # name = [result["name"] for result in json_file_data["results"]]
-        # lsp_name = [result["lsp_name"] for result in json_file_data["results"]]
         return [(result["name"], result["lsp_name"]) for result in json_file_data["results"]]
+    
+    def check_request_usage(self) -> str:
+        # Check the number of queries made to LL2 API per hour
+        try:
+            api_throttle_results = requests.get("https://ll.thespacedevs.com/2.2.0/api-throttle/")
+            api_throttle_results.raise_for_status()
+        except Exception as e:
+            print("RocketLaunchesData::check_rocket_usage: Exception has occured: {e}")
+            return None
+        else:
+            return api_throttle_results.json()
+
 
 
 launch_base_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
@@ -52,8 +61,8 @@ filters = "limit=25&include_suborbital=true&hide_recent_previous=true&ordering=n
 test_url = f"{launch_base_url}?{filters}"
 
 test_obj = RocketLaunchesData(test_url)
-test_results = test_obj.json_test_filter(sys.argv[1])
-print(test_results)
+print(test_obj.check_request_usage())
+
 
 
 
@@ -74,4 +83,4 @@ print(test_results)
 #     # print(f"{result["name"]}\n\n")
 #     print(f"{result}\n\n\n\n\n")
 
-print(sys.argv[1])
+# print(sys.argv[1])
