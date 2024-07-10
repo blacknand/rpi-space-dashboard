@@ -6,7 +6,7 @@ https://ll.thespacedevs.com/2.2.0/swagger/#/launch/launch_upcoming_list
 import requests
 import json
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 
 class RocketLaunchesData:
     def __init__(self, query_url: str):
@@ -93,26 +93,9 @@ class RocketLaunchesData:
             "minutes": minutes,
             "seconds": seconds
         }
-
-
     
-    # TODO: T+ time, if days > 0 && minute >= 15
-
-
-launch_base_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
-filters = "limit=25&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
-test_url = f"{launch_base_url}?{filters}"
-test_obj = RocketLaunchesData(test_url)
-# test_obj.rocket_query_results()
-# test_obj.json_file_dump(sys.argv[1])
-# print(test_obj.json_test_filter(sys.argv[1]))
-test_obj.json_test_filter(sys.argv[1])
-# countdown = test_obj.updated_net()[0]["countdown"]
-# print(countdown)
-# # print(test_obj.updated_net()[0]["countdown"])
-# if countdown["days"] < 0 and countdown["minutes"] >= 15:
-#     print("fuyck")
-while True:
-    print(test_obj.updated_net())
-    print("")
-# print(test_obj.check_request_usage())
+    def current_time(self):
+        today = date.today()
+        formatted_cur_date = f'{today.strftime("%a")}, {today.strftime("%b")} {today.strftime("%d")}'
+        current_time = datetime.now().strftime("%H:%M:%S")
+        return [formatted_cur_date, current_time]
