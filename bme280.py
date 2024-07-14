@@ -17,6 +17,5 @@ def bme280_results():
     temp = ("%0.1f °C" % bme280.temperature)
     humidity = ("%0.1f %%" % bme280.relative_humidity)
     pressure = ("%0.1f hPa" % bme280.pressure)
-    altitude = ("%0.2f m" % bme280.altitude)
     dew_point = f"{dewpoint} °C"
-    return [temp, humidity, pressure, altitude, dew_point]
+    return [temp, humidity, pressure, dew_point]
