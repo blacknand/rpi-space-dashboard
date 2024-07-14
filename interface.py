@@ -47,13 +47,13 @@ class MainScreen(BoxLayout):
         self.bme_dew_point = Label(text=bme280_results()[3])
 
         # Add labels above BME data inside of respective widgets
-        temp_layout.add_widget(Label(text="Temp"))
+        temp_layout.add_widget(Label(text="Temp", font_size="10sp", halign="left"))
         temp_layout.add_widget(self.bme_temp)
-        humidity_layout.add_widget(Label(text="Humidity"))
+        humidity_layout.add_widget(Label(text="Humidity", font_size="10sp"))
         humidity_layout.add_widget(self.bme_humidity)
-        pressure_layout.add_widget(Label(text="Pressure"))
+        pressure_layout.add_widget(Label(text="Pressure", font_size="10sp"))
         pressure_layout.add_widget(self.bme_pressure)
-        dew_point_layout.add_widget(Label(text="Dew point"))
+        dew_point_layout.add_widget(Label(text="Dew point", font_size="10sp"))
         dew_point_layout.add_widget(self.bme_dew_point)
 
         # Add all data to header widget
