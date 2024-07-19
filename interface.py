@@ -1,9 +1,9 @@
 import sys
 import random
-from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from rocket_launches import RocketLaunchesData
-
-# from bme280 import bme280_results                           # Comment during testing
+from bme280 import bme280_results                           # Comment during testing
 
 # Config
 launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
@@ -12,60 +12,87 @@ api_url = f"{launch_api_url}?{api_url_filters}"
 rocket_launch_obj = RocketLaunchesData(api_url)
 
 # For testing purposes (BME data only available on R pi) - comment out during deployment
-def bme280_results():
-    temp = "28°C"
-    pressure = "1250 hPa"
-    humidity = "40 %"
-    dew_point = "10°C"
-    return [temp, pressure, humidity, dew_point]
+# def bme280_results():
+#     temp = "28"
+#     pressure = "1250"
+#     humidity = "40"
+#     dew_point = "10"
+#     return [temp, pressure, humidity, dew_point]
 
 
-class MainWidget(QtWidgets.QWidget):
+class MainWidget(QWidget):
     def __init__(self):
         super().__init__()     
  
-        self.text = QtWidgets.QLabel("TEMP data", alignment=QtCore.Qt.AlignCenter)
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.text)
+        self.temp = QLabel(f"{bme280_results()[0]}°C")
+        self.pressure = QLabel(f"{bme280_results()[1]} hPa")
+        self.humidity = QLabel(f"{bme280_results()[2]} %")
+        self.dew_point = QLabel(f"{bme280_results()[3]} °C")
+        self.layout = QVBoxLayout(self)
+        self.layout.addWidget(self.temp)
+        self.layout.addWidget(self.pressure)
+        self.layout.addWidget(self.humidity)
+        self.layout.addWidget(self.dew_point)
+
+        # Update every second
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_temp)
+        self.timer.timeout.connect(self.update_pressure)
+        self.timer.timeout.connect(self.update_humidity)
+        self.timer.timeout.connect(self.update_dew_point)
+        self.timer.start(1000)
+
+
+    def update_temp(self):
+        self.temp.setText(f"{bme280_results()[0]} °C")
+
+    def update_pressure(self):
+        self.pressure.setText(f"{bme280_results()[1]} hPa")
+
+    def update_humidity(self):
+        self.humidity.setText(f"{bme280_results()[2]} %")
+
+    def update_dew_point(self):
+        self.dew_point.setText(f"{bme280_results()[3]} °C")
 
 
 # TODO: List of launches
-class LaunchWidget(QtWidgets.QWidget):
+class LaunchWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QtWidgets.QLabel("ROCKET LAUNCHES", alignment=QtCore.Qt.AlignCenter)
+        self.text = QLabel("ROCKET LAUNCHES", alignment=Qt.AlignCenter)
 
 
 # TODO: Randomly selected SpaceX image
-class SpaceXWidget(QtWidgets.QWidget):
+class SpaceXWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QtWidgets.QLabel("SPACEX IMAGES", alignment=QtCore.Qt.AlignCenter)
+        self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
 
 
 # TODO: APOD image
-class ApodWidget(QtWidgets.QWidget):
+class ApodWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QtWidgets.QLabel("APOD", alignment=QtCore.Qt.AlignCenter)
+        self.text = QLabel("APOD", alignment=Qt.AlignCenter)
 
 
 # TODO: Mars data
-class MarsWidget(QtWidgets.QWidget):
+class MarsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QtWidgets.QLabel("MARS DATA", alignment=QtCore.Qt.AlignCenter)
+        self.text = QLabel("MARS DATA", alignment=Qt.AlignCenter)
 
 
 # TODO: Space related news
-class NewsWidget(QtWidgets.QWidget):
+class NewsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QtWidgets.QLabel("SPACE NEWS", alignment=QtCore.Qt.AlignCenter)
+        self.text = QLabel("SPACE NEWS", alignment=Qt.AlignCenter)
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication([])
+    app = QApplication([])
     widget = MainWidget()
     widget.showFullScreen()
     sys.exit(app.exec())
