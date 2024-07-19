@@ -1,6 +1,8 @@
 import sys
+import signal
 import random
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from rocket_launches import RocketLaunchesData
 from bme280 import bme280_results                           # Comment during testing
@@ -25,8 +27,8 @@ class MainWidget(QWidget):
         super().__init__()     
  
         self.temp = QLabel(f"{bme280_results()[0]}°C")
-        self.pressure = QLabel(f"{bme280_results()[1]} hPa")
-        self.humidity = QLabel(f"{bme280_results()[2]} %")
+        self.humidity = QLabel(f"{bme280_results()[1]} %")
+        self.pressure = QLabel(f"{bme280_results()[2]} %")
         self.dew_point = QLabel(f"{bme280_results()[3]} °C")
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.temp)
@@ -54,6 +56,10 @@ class MainWidget(QWidget):
 
     def update_dew_point(self):
         self.dew_point.setText(f"{bme280_results()[3]} °C")
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
 
 
 # TODO: List of launches
@@ -93,6 +99,7 @@ class NewsWidget(QWidget):
 
 if __name__ == "__main__":
     app = QApplication([])
+    signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for CTRL + C
     widget = MainWidget()
     widget.showFullScreen()
     sys.exit(app.exec())
