@@ -33,19 +33,18 @@ from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainW
 
 
 # QT Widgets for BME data
-class TempWidget(QWidget):
-    def __init__(self, parent=None):
+class BMEDataWidget(QWidget):
+    def __init__(self, label, unit, min_value, max_value, color, start_angle, parent=None):
         super().__init__(parent)
         self.value = 0
-        self.max_value = 50         # Most is 50 °C
-        self.min_value = -10        # Least is -10 °C
-        self.unit = "°C"
-        self.label = "CABIN TEMP"
-        self.start_color = QColor(0, 0, 255)        # Blue
-        self.end_color = QColor(255, 0, 0)          # Red
-        self.font = QFont("Arial", 15)
-        self.setFixedSize(300, 300) 
-
+        self.label = label
+        self.unit = unit
+        self.min_value = min_value
+        self.max_value = max_value
+        self.color = color
+        self.start_angle = start_angle
+        self.font = QFont("Arial", 12)
+        self.setFixedSize(180, 180)
 
     def setValue(self, value):
         self.value = value
@@ -70,131 +69,80 @@ class TempWidget(QWidget):
         path, path2 = QPainterPath(), QPainterPath()
         circle_rect = QRectF(center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
 
-        # Beginning of arc
-        start_angle = 50  
-        path.arcMoveTo(circle_rect, start_angle)
-        path.arcTo(circle_rect, start_angle, pd) 
+        path.arcMoveTo(circle_rect, self.start_angle)
+        path.arcTo(circle_rect, self.start_angle, pd)  # Draw progress in correct direction
+
         pen, pen2 = QPen(), QPen()
         pen.setCapStyle(Qt.FlatCap)
-        pen.setColor(self.get_gradient_color())
-        pen_width = self.width() / 40
+        pen.setColor(self.color)
+        pen_width = self.width() / 25  # Adjust this value to change the progress bar thickness
         pen.setWidth(pen_width)
         painter.strokePath(path, pen)
 
-        # End of arc
-        path2.arcMoveTo(circle_rect, start_angle)
-        path2.arcTo(circle_rect, start_angle, -rd)
-        pen2.setWidth(pen_width / 2)
+        path2.arcMoveTo(circle_rect, self.start_angle)
+        path2.arcTo(circle_rect, self.start_angle, -rd)  # Draw remaining arc
+
+        pen2.setWidth(pen_width / 2)  # Reduced pen width for smaller dashes
         pen2.setColor(QColor("#d7d7d7"))
         pen2.setCapStyle(Qt.FlatCap)
-        pen2.setDashPattern([0.2, 0.8])
+        pen2.setDashPattern([0.2, 0.8])  # Reduced dash size
         pen2.setDashOffset(2.2)
         painter.strokePath(path2, pen2)
 
         # Draw description label at the top
-        painter.setFont(QFont("Arial", 15))
+        painter.setFont(QFont("Arial", 10))
         painter.setPen(Qt.white)
         painter.drawText(QRectF(center.x() - radius, center.y() - radius * 0.6, 2 * radius, radius / 2), Qt.AlignCenter, self.label)
 
-        # Draw temperature label in the middle
-        painter.setFont(QFont("Arial", 40, QFont.Bold))
+        # Draw value label in the middle
+        painter.setFont(QFont("Arial", 24, QFont.Bold))
         painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius / 4, 2 * radius, radius / 2), Qt.AlignCenter, f"{self.value:.2f}")
+        painter.drawText(QRectF(center.x() - radius, center.y() - radius / 8, 2 * radius, radius / 2), Qt.AlignCenter, f"{self.value:.2f}")
 
         # Draw unit label at the bottom
-        painter.setFont(QFont("Arial", 20))
+        painter.setFont(QFont("Arial", 12))
         painter.setPen(Qt.white)
         painter.drawText(QRectF(center.x() - radius, center.y() + radius / 6, 2 * radius, radius / 2), Qt.AlignCenter, self.unit)
 
+
+class TempWidget(BMEDataWidget):
+    def __init__(self, parent=None):
+        super().__init__(
+            label="CABIN TEMP",
+            unit="°C",
+            min_value=-10,
+            max_value=50,
+            color=QColor(255, 0, 0),
+            start_angle=50,
+            parent=parent
+        )
+
     def get_gradient_color(self):
-        # Determine color based on temperature value
-        if self.value < 10:
-            return QColor(225, 8, 33)
-        elif 10 <= self.value <= 18:
-            return QColor(123, 225, 8) 
-        elif 19 <= self.value <= 30:
-            return QColor(105, 174, 255)
+        if self.value < 8:
+            return QColor(255, 0, 0)        # Red
+        elif 8 <= self.value <= 15:
+            return QColor(0, 255, 0)        # Green
+        elif 16 <= self.value <= 30:
+            return QColor(0, 0, 255)        # Blue
         elif 31 <= self.value <= 50:
-            return QColor(255, 0, 0)
+            return QColor(255, 69, 0)       # Bright Red
         else:
-            return QColor(255, 255, 255)
-        
+            return QColor(255, 255, 255)    # White for undefined ranges
 
-class HumidityWidget(QWidget):
+
+class HumidityWidget(BMEDataWidget):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.value = 0
-        self.max_value = 100    
-        self.min_value = 0       
-        self.unit = "%"
-        self.label = "CABIN HUMIDITY"
-        self.start_color = QColor(0, 0, 255)        # Blue
-        self.end_color = QColor(255, 0, 0)          # Red
-        self.font = QFont("Arial", 15)
-        self.setFixedSize(300, 300) 
-
-
-    def setValue(self, value):
-        self.value = value
-        self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # Calculate the dimensions
-        rect = QRectF(0, 0, self.width(), self.height())
-        center = rect.center()
-        radius = min(self.width(), self.height()) / 2 - 20  # Adjust for padding
-
-        # Calculate the percentage
-        percentage = (self.value - self.min_value) / (self.max_value - self.min_value)
-        total_degrees = 295  # Total arc span
-        pd = percentage * total_degrees
-        rd = total_degrees - pd
-
-        # Draw progress arc
-        path, path2 = QPainterPath(), QPainterPath()
-        circle_rect = QRectF(center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-
-        # Beginning of arc
-        start_angle = 240
-        path.arcMoveTo(circle_rect, start_angle)
-        path.arcTo(circle_rect, start_angle, pd) 
-        pen, pen2 = QPen(), QPen()
-        pen.setCapStyle(Qt.FlatCap)
-        pen.setColor(self.get_gradient_color())
-        pen_width = self.width() / 40
-        pen.setWidth(pen_width)
-        painter.strokePath(path, pen)
-
-        # End of arc
-        path2.arcMoveTo(circle_rect, start_angle)
-        path2.arcTo(circle_rect, start_angle, -rd)
-        pen2.setWidth(pen_width / 2)
-        pen2.setColor(QColor("#d7d7d7"))
-        pen2.setCapStyle(Qt.FlatCap)
-        pen2.setDashPattern([0.2, 0.8])
-        pen2.setDashOffset(2.2)
-        painter.strokePath(path2, pen2)
-
-        # Draw description label at the top
-        painter.setFont(QFont("Arial", 15))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius * 0.6, 2 * radius, radius / 2), Qt.AlignCenter, self.label)
-
-        # Draw temperature label in the middle
-        painter.setFont(QFont("Arial", 40, QFont.Bold))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius / 4, 2 * radius, radius / 2), Qt.AlignCenter, f"{self.value:.2f}")
-
-        # Draw unit label at the bottom
-        painter.setFont(QFont("Arial", 20))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() + radius / 6, 2 * radius, radius / 2), Qt.AlignCenter, self.unit)
+        super().__init__(
+            label="CABIN HUMIDITY",
+            unit="%",
+            min_value=0,
+            max_value=100,
+            color=QColor(255, 0, 0),
+            start_angle=240,
+            parent=parent
+        )
 
     def get_gradient_color(self):
-        # Determine color based on temperature value
         if self.value < 20:
             return QColor(225, 8, 33)
         elif 20 <= self.value <= 60:
@@ -202,84 +150,22 @@ class HumidityWidget(QWidget):
         elif 61 <= self.value <= 100:
             return QColor(105, 174, 255)
         else:
-            return QColor(255, 255, 255)
+            return QColor(255, 255, 255)    
         
 
-class PressureWidget(QWidget):
+class PressureWidget(BMEDataWidget):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.value = 0
-        self.max_value = 9999    
-        self.min_value = 0       
-        self.unit = "%"
-        self.label = "ATMOS PRESSURE"
-        self.start_color = QColor(0, 0, 255)        # Blue
-        self.end_color = QColor(255, 0, 0)          # Red
-        self.font = QFont("Arial", 15)
-        self.setFixedSize(300, 300) 
-
-
-    def setValue(self, value):
-        self.value = value
-        self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # Calculate the dimensions
-        rect = QRectF(0, 0, self.width(), self.height())
-        center = rect.center()
-        radius = min(self.width(), self.height()) / 2 - 20  # Adjust for padding
-
-        # Calculate the percentage
-        percentage = (self.value - self.min_value) / (self.max_value - self.min_value)
-        total_degrees = 295  # Total arc span
-        pd = percentage * total_degrees
-        rd = total_degrees - pd
-
-        # Draw progress arc
-        path, path2 = QPainterPath(), QPainterPath()
-        circle_rect = QRectF(center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-
-        # Beginning of arc
-        start_angle = 240
-        path.arcMoveTo(circle_rect, start_angle)
-        path.arcTo(circle_rect, start_angle, pd) 
-        pen, pen2 = QPen(), QPen()
-        pen.setCapStyle(Qt.FlatCap)
-        pen.setColor(self.get_gradient_color())
-        pen_width = self.width() / 40
-        pen.setWidth(pen_width)
-        painter.strokePath(path, pen)
-
-        # End of arc
-        path2.arcMoveTo(circle_rect, start_angle)
-        path2.arcTo(circle_rect, start_angle, -rd)
-        pen2.setWidth(pen_width / 2)
-        pen2.setColor(QColor("#d7d7d7"))
-        pen2.setCapStyle(Qt.FlatCap)
-        pen2.setDashPattern([0.2, 0.8])
-        pen2.setDashOffset(2.2)
-        painter.strokePath(path2, pen2)
-
-        # Draw description label at the top
-        painter.setFont(QFont("Arial", 15))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius * 0.6, 2 * radius, radius / 2), Qt.AlignCenter, self.label)
-
-        # Draw temperature label in the middle
-        painter.setFont(QFont("Arial", 40, QFont.Bold))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius / 4, 2 * radius, radius / 2), Qt.AlignCenter, f"{self.value:.2f}")
-
-        # Draw unit label at the bottom
-        painter.setFont(QFont("Arial", 20))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() + radius / 6, 2 * radius, radius / 2), Qt.AlignCenter, self.unit)
+        super().__init__(
+            label="ATMOS PRESSURE",
+            unit="hPa %",
+            min_value=0,
+            max_value=9999,
+            color=QColor(255, 0, 0),
+            start_angle=240,
+            parent=parent
+        )
 
     def get_gradient_color(self):
-        # Determine color based on temperature value
         if self.value < 1000:
             return QColor(225, 8, 33)
         elif 1001 <= self.value <= 1500:
@@ -290,81 +176,19 @@ class PressureWidget(QWidget):
             return QColor(255, 255, 255)
         
 
-class DewPointWidget(QWidget):
+class DewPointWidget(BMEDataWidget):
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.value = 0
-        self.max_value = 0   
-        self.min_value = 100  
-        self.unit = "°C"
-        self.label = "DEW POINT"
-        self.start_color = QColor(0, 0, 255)        # Blue
-        self.end_color = QColor(255, 0, 0)          # Red
-        self.font = QFont("Arial", 15)
-        self.setFixedSize(300, 300) 
-
-
-    def setValue(self, value):
-        self.value = value
-        self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-
-        # Calculate the dimensions
-        rect = QRectF(0, 0, self.width(), self.height())
-        center = rect.center()
-        radius = min(self.width(), self.height()) / 2 - 20  # Adjust for padding
-
-        # Calculate the percentage
-        percentage = (self.value - self.min_value) / (self.max_value - self.min_value)
-        total_degrees = 295  # Total arc span
-        pd = percentage * total_degrees
-        rd = total_degrees - pd
-
-        # Draw progress arc
-        path, path2 = QPainterPath(), QPainterPath()
-        circle_rect = QRectF(center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-
-        # Beginning of arc
-        start_angle = 302.5
-        path.arcMoveTo(circle_rect, start_angle)
-        path.arcTo(circle_rect, start_angle, pd) 
-        pen, pen2 = QPen(), QPen()
-        pen.setCapStyle(Qt.FlatCap)
-        pen.setColor(self.get_gradient_color())
-        pen_width = self.width() / 40
-        pen.setWidth(pen_width)
-        painter.strokePath(path, pen)
-
-        # End of arc
-        path2.arcMoveTo(circle_rect, start_angle)
-        path2.arcTo(circle_rect, start_angle, -rd)
-        pen2.setWidth(pen_width / 2)
-        pen2.setColor(QColor("#d7d7d7"))
-        pen2.setCapStyle(Qt.FlatCap)
-        pen2.setDashPattern([0.2, 0.8])
-        pen2.setDashOffset(2.2)
-        painter.strokePath(path2, pen2)
-
-        # Draw description label at the top
-        painter.setFont(QFont("Arial", 15))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius * 0.6, 2 * radius, radius / 2), Qt.AlignCenter, self.label)
-
-        # Draw temperature label in the middle
-        painter.setFont(QFont("Arial", 40, QFont.Bold))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() - radius / 4, 2 * radius, radius / 2), Qt.AlignCenter, f"{self.value:.2f}")
-
-        # Draw unit label at the bottom
-        painter.setFont(QFont("Arial", 20))
-        painter.setPen(Qt.white)
-        painter.drawText(QRectF(center.x() - radius, center.y() + radius / 6, 2 * radius, radius / 2), Qt.AlignCenter, self.unit)
+        super().__init__(
+            label="DEW POINT",
+            unit="°C",
+            min_value=0,
+            max_value=100,
+            color=QColor(255, 0, 0),
+            start_angle=302.5,
+            parent=parent
+        )
 
     def get_gradient_color(self):
-        # Determine color based on temperature value
         if self.value < 50:
             return QColor(225, 8, 33)
         elif 51 <= self.value <= 60:
@@ -374,4 +198,4 @@ class DewPointWidget(QWidget):
         elif 71 <= self.value <= 100:
             return QColor(255, 0, 0)
         else:
-            return QColor(255, 255, 255)
+            return QColor(255, 255, 255)    
