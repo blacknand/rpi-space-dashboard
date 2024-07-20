@@ -7,7 +7,7 @@ from PySide6.QtGui import QKeyEvent, QPainter, QPen, QColor, QFont, QPainterPath
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow, QGridLayout, QHBoxLayout
 from rocket_launches import RocketLaunchesData
 # from bme280 import bme280_results                           # Comment during testing
-from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget
+from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 
 # Config
 launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
@@ -16,12 +16,12 @@ api_url = f"{launch_api_url}?{api_url_filters}"
 rocket_launch_obj = RocketLaunchesData(api_url)
 
 # For testing purposes (BME data only available on R pi) - comment out during deployment
-def bme280_results():
-    temp = "28"
-    pressure = "1250"
-    humidity = "40"
-    dew_point = "10"
-    return [temp, pressure, humidity, dew_point]
+# def bme280_results():
+#     temp = "28"
+#     pressure = "1250"
+#     humidity = "40"
+#     dew_point = "10"
+#     return [temp, pressure, humidity, dew_point]
 
 
 class MainWidget(QWidget):
@@ -48,6 +48,9 @@ class MainWidget(QWidget):
     def update_labels(self):
         temp, pressure, humidity, dew_point = bme280_results()
         self.temp_display.setValue(float(temp))
+        self.pressure_display.setValue(float(pressure))
+        self.humidity_display.setValue(float(humidity))
+        self.dew_point_display.setValue(float(dew_point))
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
