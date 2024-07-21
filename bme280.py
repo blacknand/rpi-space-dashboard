@@ -44,6 +44,7 @@ class BMEDataWidget(QWidget):
         self.start_angle = start_angle
         self.font = QFont("Arial", 12)
         self.setFixedSize(180, 180)
+            
 
     def setValue(self, value):
         self.value = value

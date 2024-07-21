@@ -1,7 +1,7 @@
 import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPainter, QCursor
+from PySide6.QtGui import QPainter, QCursor, QColor
 from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout
 from rocket_launches import RocketLaunchesData
 # from bme280 import bme280_results                           # Comment during testing
@@ -28,6 +28,7 @@ class MainWidget(QWidget):
         # Widget config
         self.layout = QHBoxLayout(self)
         self.setCursor(QCursor(Qt.BlankCursor))
+        self.setStyleSheet("background-color: #050A30;")
 
         self.layout.addWidget(self.temp_display)
         self.layout.addWidget(self.humidity_display)
