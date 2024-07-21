@@ -1,27 +1,18 @@
 import sys
 import signal
-import random
-import math
-from PySide6.QtCore import Qt, QTimer, QRectF, QPointF
-from PySide6.QtGui import QKeyEvent, QPainter, QPen, QColor, QFont, QPainterPath
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow, QGridLayout, QHBoxLayout
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPainter, QCursor
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout
 from rocket_launches import RocketLaunchesData
 # from bme280 import bme280_results                           # Comment during testing
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
+from custom_widgets import *
 
 # Config
 launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
 api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
 api_url = f"{launch_api_url}?{api_url_filters}"
 rocket_launch_obj = RocketLaunchesData(api_url)
-
-# For testing purposes (BME data only available on R pi) - comment out during deployment
-# def bme280_results():
-#     temp = "28"
-#     pressure = "1250"
-#     humidity = "40"
-#     dew_point = "10"
-#     return [temp, pressure, humidity, dew_point]
 
 
 class MainWidget(QWidget):
@@ -32,12 +23,17 @@ class MainWidget(QWidget):
         self.humidity_display = HumidityWidget()
         self.pressure_display = PressureWidget()
         self.dew_point_display = DewPointWidget()
+        self.dragon_image_widget = DragonImageWidget(200, 200)
 
+        # Widget config
         self.layout = QHBoxLayout(self)
+        self.setCursor(QCursor(Qt.BlankCursor))
+
         self.layout.addWidget(self.temp_display)
         self.layout.addWidget(self.humidity_display)
         self.layout.addWidget(self.pressure_display)
         self.layout.addWidget(self.dew_point_display)
+        self.layout.addWidget(self.dragon_image_widget)
 
         # Update every second
         self.timer = QTimer(self)
@@ -46,7 +42,7 @@ class MainWidget(QWidget):
 
 
     def update_labels(self):
-        temp, pressure, humidity, dew_point = bme280_results()
+        temp, humidity, pressure, dew_point = bme280_results()
         self.temp_display.setValue(float(temp))
         self.pressure_display.setValue(float(pressure))
         self.humidity_display.setValue(float(humidity))
