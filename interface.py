@@ -2,11 +2,10 @@ import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QCursor, QColor
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout, QGridLayout
 from rocket_launches import RocketLaunchesData
-# from bme280 import bme280_results                           # Comment during testing
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
-from custom_widgets import *
+from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
 
 # Config
 launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
@@ -18,31 +17,51 @@ rocket_launch_obj = RocketLaunchesData(api_url)
 class MainWidget(QWidget):
     def __init__(self):
         super().__init__()     
+
+        layout = QGridLayout()
  
+        self.header_widget = HeaderWidget()
         self.temp_display = TempWidget()
         self.humidity_display = HumidityWidget()
         self.pressure_display = PressureWidget()
         self.dew_point_display = DewPointWidget()
-        self.dragon_image_widget = DragonImageWidget(200, 200)
+        dragon_image_widget = DragonImageWidget(200, 200)
+        buttons_widget = FooterButtonsWidget()
+
+        # TODO: We need everything in a row, stacked horizontally where each row is the respective data
+        # bme one row
+        # header one row
+        # button box one row
+        # etc
 
         # Widget config
-        self.layout = QHBoxLayout(self)
+
         self.setCursor(QCursor(Qt.BlankCursor))
         self.setStyleSheet("background-color: #050A30;")
 
-        self.layout.addWidget(self.temp_display)
-        self.layout.addWidget(self.humidity_display)
-        self.layout.addWidget(self.pressure_display)
-        self.layout.addWidget(self.dew_point_display)
-        self.layout.addWidget(self.dragon_image_widget)
+        layout.addWidget(self.header_widget, 0, 0)
+        layout.addWidget(buttons_widget, 5, 0)
+
+        # self.grid_layout = QGridLayout(self)
+        # self.grid_layout.setSpacing(0)
+        # self.grid_layout.setContentsMargins(0, 0, 0, 0)
+
+
+        # self.layout.addWidget(self.temp_display)
+        # self.layout.addWidget(self.humidity_display)
+        # self.layout.addWidget(self.pressure_display)
+        # self.layout.addWidget(self.dew_point_display)
+        # self.layout.addWidget(self.dragon_image_widget)
 
         # Update every second
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_labels)
         self.timer.start(1000)
 
+        self.setLayout(layout)
 
     def update_labels(self):
+        # BME data
         temp, humidity, pressure, dew_point = bme280_results()
         self.temp_display.setValue(float(temp))
         self.pressure_display.setValue(float(pressure))
