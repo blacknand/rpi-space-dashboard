@@ -28,30 +28,16 @@ class MainWidget(QWidget):
         dragon_image_widget = DragonImageWidget(200, 200)
         buttons_widget = FooterButtonsWidget()
 
-        # TODO: We need everything in a row, stacked horizontally where each row is the respective data
-        # bme one row
-        # header one row
-        # button box one row
-        # etc
-
-        # Widget config
-
         self.setCursor(QCursor(Qt.BlankCursor))
         self.setStyleSheet("background-color: #050A30;")
 
-        layout.addWidget(self.header_widget, 0, 0)
-        layout.addWidget(buttons_widget, 5, 0)
-
-        # self.grid_layout = QGridLayout(self)
-        # self.grid_layout.setSpacing(0)
-        # self.grid_layout.setContentsMargins(0, 0, 0, 0)
-
-
-        # self.layout.addWidget(self.temp_display)
-        # self.layout.addWidget(self.humidity_display)
-        # self.layout.addWidget(self.pressure_display)
-        # self.layout.addWidget(self.dew_point_display)
-        # self.layout.addWidget(self.dragon_image_widget)
+        layout.addWidget(self.header_widget, 0, 0, 1, 2)                # Header spans across both columns in row 0
+        layout.addWidget(dragon_image_widget, 1, 1, 2, 2)               # Dragon image spans row 1 and 2, and both columns
+        layout.addWidget(self.humidity_display, 1, 0)                   # Humidity display in row 1, column 0
+        layout.addWidget(self.temp_display, 1, 1)                       # Temperature display in row 1, column 1
+        layout.addWidget(self.pressure_display, 2, 0)                   # Pressure display in row 2, column 0
+        layout.addWidget(self.dew_point_display, 2, 1)                  # Dew point display in row 2, column 1
+        layout.addWidget(buttons_widget, 3, 0, 1, 2)                    # Buttons widget spans across both columns in row 3
 
         # Update every second
         self.timer = QTimer(self)

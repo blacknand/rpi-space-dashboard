@@ -1,5 +1,5 @@
 from PySide6.QtGui import QPixmap, QAction, QIcon, QColor
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QStatusBar, QToolBar, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QStatusBar, QToolBar, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QFrame
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize
 from datetime import datetime, date
 
@@ -82,7 +82,7 @@ class FooterButtonsWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("footerButtonsWidget")       # Set obj name to apply CSS stylesheet directly
-        self.layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
 
         self.dragon_button = self.create_icon_button("images/spacex_images/dragon-button-icon.png")
         self.fh_button = self.create_icon_button("images/spacex_images/fh-button-icon.png")
@@ -90,20 +90,19 @@ class FooterButtonsWidget(QWidget):
         self.rover_button = self.create_icon_button("images/nasa_images/rover-button-icon.png")
         self.spacex_button = self.create_icon_button("images/spacex_images/spacex-button-icon.png")
 
-        self.layout.addWidget(self.dragon_button)
-        self.layout.addWidget(self.fh_button)
-        self.layout.addWidget(self.apod_button)
-        self.layout.addWidget(self.rover_button)
-        self.layout.addWidget(self.spacex_button)
+        layout.addWidget(self.dragon_button)
+        layout.addWidget(self.fh_button)
+        layout.addWidget(self.apod_button)
+        layout.addWidget(self.rover_button)
+        layout.addWidget(self.spacex_button)
 
-        self.setLayout(self.layout)
+        self.setMinimumHeight(100)
 
         self.setStyleSheet("""
-            #footerButtonsWidget {
-                border-top: 2px solid black;
-                border-left: 2px solid black;
-                border-right: 2px solid black;
-                border-bottom: none;
+            QWidget#footerButtonsWidget {
+                border-top: 2px solid white;
+                border-right: 2px solid white;
+                border-left: 2px solid white;
             }
         """)
 
