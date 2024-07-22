@@ -2,7 +2,7 @@ import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QCursor, QColor
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout, QGridLayout
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout, QGridLayout, QPushButton
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
@@ -27,7 +27,9 @@ class MainWidget(QWidget):
         self.dew_point_display = DewPointWidget()
         self.dragon_image_widget = DragonImageWidget(200, 200)
         buttons_widget = FooterButtonsWidget()
+        self.eject_button = QPushButton("EJECT")
 
+        self.eject_button.setStyleSheet("background-color: transparent; border: 2px solid white; color: white; padding: 5px; border-radius: 7.5px;")
         self.setStyleSheet("""
             background-color: #050A30;
             QLabel {
@@ -56,11 +58,13 @@ class MainWidget(QWidget):
         layout.addWidget(self.dew_point_display, 2, 1)                 # Dew point display in row 2, column 1
         layout.addWidget(self.dragon_image_widget, 1, 2, 2, 1, Qt.AlignCenter)  # Dragon image spans rows 1 and 2, and column 2
         layout.addWidget(buttons_widget, 3, 0, 1, 3, Qt.AlignCenter)   # Buttons widget spans across all columns in row 3
+        layout.addWidget(self.eject_button, 3, 0)
 
         # Add stretch to push the buttons widget to the bottom
         layout.setRowStretch(2, 1)
         layout.setRowStretch(3, 0)
 
+        self.eject_button.clicked.connect(self.eject_dashboard)
 
         self.setLayout(layout)
 
@@ -75,6 +79,10 @@ class MainWidget(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
+
+    def eject_dashboard(self, event):
+        print("Safely ejected out of capsule.")
+        QApplication.quit()
 
 
 # TODO: List of launches

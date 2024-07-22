@@ -108,7 +108,8 @@ class FooterButtonsWidget(QWidget):
         layout.addWidget(self.rover_button)
         layout.addWidget(self.spacex_button)
 
-        self.setMinimumHeight(100)
+        self.setMinimumHeight(60)
+        self.setMinimumWidth(400)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)           # Required to apply style sheet on QWidget
         self.setStyleSheet("""
             QWidget#footerButtonsWidget {
@@ -119,8 +120,8 @@ class FooterButtonsWidget(QWidget):
     def create_icon_button(self, icon_path):
         button = QPushButton()
         button.setIcon(QIcon(icon_path))
-        button.setIconSize(QSize(64, 64))
-        button.setFixedSize(80, 80)
+        button.setIconSize(QSize(40, 40))
+        button.setFixedSize(40, 40)
         button.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
         return button
     
@@ -146,3 +147,4 @@ class FooterButtonsWidget(QWidget):
         # Apply the shape to the widget
         region = QRegion(trapezoid)
         self.setMask(region)
+        
