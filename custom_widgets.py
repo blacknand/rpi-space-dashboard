@@ -1,6 +1,6 @@
-from PySide6.QtGui import QPixmap, QAction, QIcon, QColor
+from PySide6.QtGui import QPixmap, QAction, QIcon, QColor, QPen, QPolygon, QPainter, QRegion
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QStatusBar, QToolBar, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QFrame
-from PySide6.QtCore import Qt, QTimer, QRectF, QSize
+from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from datetime import datetime, date
 
 
@@ -8,42 +8,54 @@ class DragonImageWidget(QWidget):
     def __init__(self, width=None, height=None):
         super().__init__()
 
-        image = QPixmap("images/spacex_images/file.png")
+        self.image_path = "images/spacex_images/file.png"
+        self.image = QPixmap(self.image_path)
 
         if width is not None and height is not None:
-            image = image.scaled(width, height, Qt.KeepAspectRatio)
+            self.image = self.image.scaled(width, height, Qt.KeepAspectRatio)
 
         # Create a QGraphicsScene
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene, self)
+        self.view.setStyleSheet("background: transparent; border: none;")  # Remove the background and border
 
         # Create a QGraphicsPixmapItem with the image
-        capsule_item = QGraphicsPixmapItem(image)
+        self.capsule_item = QGraphicsPixmapItem(self.image)
 
-        # Create the shadow effect
+        # Create the shadow effect to simulate the glow
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(50)
         shadow.setColor(QColor(255, 255, 255, 160))  # White glow
-        shadow.setOffset(0, 0)
+
+        # Set the shadow offset to make the glow come only from the bottom
+        shadow.setOffset(0, 10)  # Adjust the offset as needed
 
         # Apply the shadow effect to the pixmap item
-        capsule_item.setGraphicsEffect(shadow)
+        self.capsule_item.setGraphicsEffect(shadow)
 
         # Add the pixmap item to the scene
-        self.scene.addItem(capsule_item)
+        self.scene.addItem(self.capsule_item)
 
         # Set the scene rectangle to fit the pixmap item
-        self.scene.setSceneRect(QRectF(image.rect()))
+        self.scene.setSceneRect(QRectF(self.image.rect()))
 
         # Set up the layout
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.view)
+        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
 
         # Resize the view to fit the scene
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
         # Resize the widget to fit the view
-        self.resize(image.width(), image.height())
+        self.resize(self.image.width(), self.image.height())
+
+    def resize_image(self, width, height):
+        self.image = QPixmap(self.image_path).scaled(width, height, Qt.KeepAspectRatio)
+        self.capsule_item.setPixmap(self.image)
+        self.scene.setSceneRect(QRectF(self.image.rect()))
+        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+        self.resize(self.image.width(), self.image.height())
 
 
 class HeaderWidget(QWidget):
@@ -97,12 +109,10 @@ class FooterButtonsWidget(QWidget):
         layout.addWidget(self.spacex_button)
 
         self.setMinimumHeight(100)
-
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)           # Required to apply style sheet on QWidget
         self.setStyleSheet("""
             QWidget#footerButtonsWidget {
-                border-top: 2px solid white;
-                border-right: 2px solid white;
-                border-left: 2px solid white;
+                background-color: #000000;
             }
         """)
 
@@ -113,3 +123,26 @@ class FooterButtonsWidget(QWidget):
         button.setFixedSize(80, 80)
         button.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
         return button
+    
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+
+        # Define the downward sloped trapezoid shape
+        width = self.width()
+        height = self.height()
+        trapezoid = QPolygon([
+            QPoint(20, 0),
+            QPoint(width - 20, 0),
+            QPoint(width, height),
+            QPoint(0, height)
+        ])
+
+        # Set the brush to black and draw the trapezoid
+        painter.setBrush(QColor("#000000"))
+        painter.setPen(Qt.NoPen)  # Remove the border
+        painter.drawPolygon(trapezoid)
+
+        # Apply the shape to the widget
+        region = QRegion(trapezoid)
+        self.setMask(region)

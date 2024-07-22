@@ -25,24 +25,42 @@ class MainWidget(QWidget):
         self.humidity_display = HumidityWidget()
         self.pressure_display = PressureWidget()
         self.dew_point_display = DewPointWidget()
-        dragon_image_widget = DragonImageWidget(200, 200)
+        self.dragon_image_widget = DragonImageWidget(200, 200)
         buttons_widget = FooterButtonsWidget()
 
-        self.setCursor(QCursor(Qt.BlankCursor))
-        self.setStyleSheet("background-color: #050A30;")
+        self.setStyleSheet("""
+            background-color: #050A30;
+            QLabel {
+                font-size: 18px;
+                color: white;
+            }
+            QLabel#dragon_image {
+                border: none;
+            }
+            QPushButton {
+                background-color: transparent;
+                border: none;
+                color: white;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #444;
+            }
+        """)
 
-        layout.addWidget(self.header_widget, 0, 0, 1, 2)                # Header spans across both columns in row 0
-        layout.addWidget(dragon_image_widget, 1, 1, 2, 2)               # Dragon image spans row 1 and 2, and both columns
-        layout.addWidget(self.humidity_display, 1, 0)                   # Humidity display in row 1, column 0
-        layout.addWidget(self.temp_display, 1, 1)                       # Temperature display in row 1, column 1
-        layout.addWidget(self.pressure_display, 2, 0)                   # Pressure display in row 2, column 0
-        layout.addWidget(self.dew_point_display, 2, 1)                  # Dew point display in row 2, column 1
-        layout.addWidget(buttons_widget, 3, 0, 1, 2)                    # Buttons widget spans across both columns in row 3
+        # Add widgets to the grid layout with appropriate spanning and alignment
+        layout.addWidget(self.header_widget, 0, 0, 1, 2)               # Header spans across both columns in row 0
+        layout.addWidget(self.humidity_display, 1, 0)                  # Humidity display in row 1, column 0
+        layout.addWidget(self.temp_display, 1, 1)                      # Temperature display in row 1, column 1
+        layout.addWidget(self.pressure_display, 2, 0)                  # Pressure display in row 2, column 0
+        layout.addWidget(self.dew_point_display, 2, 1)                 # Dew point display in row 2, column 1
+        layout.addWidget(self.dragon_image_widget, 1, 2, 2, 1, Qt.AlignCenter)  # Dragon image spans rows 1 and 2, and column 2
+        layout.addWidget(buttons_widget, 3, 0, 1, 3, Qt.AlignCenter)   # Buttons widget spans across all columns in row 3
 
-        # Update every second
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_labels)
-        self.timer.start(1000)
+        # Add stretch to push the buttons widget to the bottom
+        layout.setRowStretch(2, 1)
+        layout.setRowStretch(3, 0)
+
 
         self.setLayout(layout)
 
@@ -87,16 +105,10 @@ class MarsWidget(QWidget):
         self.text = QLabel("MARS DATA", alignment=Qt.AlignCenter)
 
 
-# TODO: Space related news
-class NewsWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.text = QLabel("SPACE NEWS", alignment=Qt.AlignCenter)
-
-
 if __name__ == "__main__":
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
     widget.showFullScreen()
+    widget.dragon_image_widget.resize_image(300, 300)
     sys.exit(app.exec())
