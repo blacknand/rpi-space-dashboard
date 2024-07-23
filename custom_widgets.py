@@ -4,6 +4,10 @@ from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from datetime import datetime, date
 
 
+from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
+from PySide6.QtGui import QPixmap, QColor
+from PySide6.QtCore import Qt, QRectF
+
 class DragonImageWidget(QWidget):
     def __init__(self, width=None, height=None):
         super().__init__()
@@ -11,11 +15,16 @@ class DragonImageWidget(QWidget):
         self.image_path = "images/spacex_images/file.png"
         self.image = QPixmap(self.image_path)
 
-        if width is not None and height is not None:
-            self.image = self.image.scaled(width, height, Qt.KeepAspectRatio)
+        # Set the default size if width and height are not provided
+        if width is None or height is None:
+            width = self.image.width()
+            height = self.image.height()
+
+        self.desired_width = width
+        self.desired_height = height
 
         # Create a QGraphicsScene
-        self.scene = QGraphicsScene()
+        self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene, self)
         self.view.setStyleSheet("background: transparent; border: none;")  # Remove the background and border
 
@@ -36,26 +45,28 @@ class DragonImageWidget(QWidget):
         # Add the pixmap item to the scene
         self.scene.addItem(self.capsule_item)
 
-        # Set the scene rectangle to fit the pixmap item
-        self.scene.setSceneRect(QRectF(self.image.rect()))
-
         # Set up the layout
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.view)
         self.layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
 
-        # Resize the view to fit the scene
-        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
-
-        # Resize the widget to fit the view
-        self.resize(self.image.width(), self.image.height())
+        # Initial resize
+        self.resize_image(width, height)
 
     def resize_image(self, width, height):
         self.image = QPixmap(self.image_path).scaled(width, height, Qt.KeepAspectRatio)
         self.capsule_item.setPixmap(self.image)
         self.scene.setSceneRect(QRectF(self.image.rect()))
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
-        self.resize(self.image.width(), self.image.height())
+        self.resize(width, height)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.resize_image(self.width(), self.height())
+        
+    def sizeHint(self):
+        return QSize(self.desired_width, self.desired_height)
+
 
 
 class HeaderWidget(QWidget):
@@ -75,6 +86,10 @@ class HeaderWidget(QWidget):
         self.layout.addWidget(self.date_label)
         self.layout.addWidget(self.header_title)
         self.layout.addWidget(self.time_label)
+
+        self.setStyleSheet("""
+            QLabel {color: white;}
+        """)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_labels)

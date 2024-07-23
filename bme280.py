@@ -1,35 +1,35 @@
-# import board
+import board
 import math
-# from adafruit_bme280 import basic as adafruit_bme280
+from adafruit_bme280 import basic as adafruit_bme280
 from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QPainterPath, QPalette
 from PySide6.QtWidgets import QWidget
 
 # I2C connection
-# i2c = board.I2C()
-# bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
-# bme280.sea_level_pressure = 1010                                    # Base calibration point
+i2c = board.I2C()
+bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
+bme280.sea_level_pressure = 1010                                    # Base calibration point
 
-# b = 17.62
-# c = 243.12
-# gamma = (b * bme280.temperature / (c + bme280.temperature)) + math.log(bme280.humidity / 100.0)
-# dewpoint = format((c * gamma) / (b * gamma), ".2f")
+b = 17.62
+c = 243.12
+gamma = (b * bme280.temperature / (c + bme280.temperature)) + math.log(bme280.humidity / 100.0)
+dewpoint = format((c * gamma) / (b * gamma), ".2f")
 
-# def bme280_results():
-#     temp = bme280.temperature
-#     humidity = bme280.relative_humidity
-#     pressure = bme280.pressure
-#     dew_point = float(dewpoint)
-#     return [temp, humidity, pressure, dew_point]
+def bme280_results():
+    temp = bme280.temperature
+    humidity = bme280.relative_humidity
+    pressure = bme280.pressure
+    dew_point = float(dewpoint)
+    return [temp, humidity, pressure, dew_point]
 
 
 # For testing purposes (BME data only available on R pi) - comment out during deployment
-def bme280_results():
-    temp = "28"
-    pressure = "1250"
-    humidity = "40"
-    dew_point = "10"
-    return [temp, humidity, pressure, dew_point]
+# def bme280_results():
+#     temp = "28"
+#     pressure = "1250"
+#     humidity = "40"
+#     dew_point = "10"
+#     return [temp, humidity, pressure, dew_point]
 
 
 # QT Widgets for BME data

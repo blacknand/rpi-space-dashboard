@@ -25,7 +25,7 @@ class MainWidget(QWidget):
         self.humidity_display = HumidityWidget()
         self.pressure_display = PressureWidget()
         self.dew_point_display = DewPointWidget()
-        self.dragon_image_widget = DragonImageWidget(200, 200)
+        self.dragon_image_widget = DragonImageWidget(600, 400)
         buttons_widget = FooterButtonsWidget()
         self.eject_button = QPushButton("EJECT")
 
@@ -64,7 +64,13 @@ class MainWidget(QWidget):
         layout.setRowStretch(2, 1)
         layout.setRowStretch(3, 0)
 
+        self.setCursor(Qt.BlankCursor)
         self.eject_button.clicked.connect(self.eject_dashboard)
+
+        # Update every second
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_labels)
+        self.timer.start(1000)
 
         self.setLayout(layout)
 
@@ -118,5 +124,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
     widget.showFullScreen()
-    widget.dragon_image_widget.resize_image(300, 300)
     sys.exit(app.exec())
