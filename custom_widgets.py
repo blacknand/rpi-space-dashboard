@@ -1,21 +1,19 @@
-from PySide6.QtGui import QPixmap, QAction, QIcon, QColor, QPen, QPolygon, QPainter, QRegion
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QStatusBar, QToolBar, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QFrame
-from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from datetime import datetime, date
-
-
+from PySide6.QtGui import QPixmap,QIcon, QColor, QPolygon, QPainter, QRegion
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout
+from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
-from PySide6.QtGui import QPixmap, QColor
+from PySide6.QtGui import QPixmap, QColor, QFont
 from PySide6.QtCore import Qt, QRectF
+
 
 class DragonImageWidget(QWidget):
     def __init__(self, width=None, height=None):
         super().__init__()
 
-        self.image_path = "images/spacex_images/file.png"
+        self.image_path = "images/spacex_images/file.png" 
         self.image = QPixmap(self.image_path)
 
-        # Set the default size if width and height are not provided
         if width is None or height is None:
             width = self.image.width()
             height = self.image.height()
@@ -26,31 +24,23 @@ class DragonImageWidget(QWidget):
         # Create a QGraphicsScene
         self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene, self)
-        self.view.setStyleSheet("background: transparent; border: none;")  # Remove the background and border
+        self.view.setStyleSheet("background: transparent; border: none;") 
 
-        # Create a QGraphicsPixmapItem with the image
         self.capsule_item = QGraphicsPixmapItem(self.image)
 
-        # Create the shadow effect to simulate the glow
+        # Create the shadow effect to simulate the bottom glow
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(50)
-        shadow.setColor(QColor(255, 255, 255, 160))  # White glow
-
-        # Set the shadow offset to make the glow come only from the bottom
-        shadow.setOffset(0, 10)  # Adjust the offset as needed
-
-        # Apply the shadow effect to the pixmap item
+        shadow.setColor(QColor(255, 255, 255, 160))             # White glow
+        shadow.setOffset(0, 20)                                 # Set shadow offset for more emphasis on the bottom
         self.capsule_item.setGraphicsEffect(shadow)
-
-        # Add the pixmap item to the scene
         self.scene.addItem(self.capsule_item)
 
         # Set up the layout
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.view)
-        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # Initial resize
         self.resize_image(width, height)
 
     def resize_image(self, width, height):
@@ -74,7 +64,8 @@ class HeaderWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.layout = QHBoxLayout(self)
+        self.layout = QHBoxLayout()
+        self.setLayout(self.layout)
 
         self.header_title = QLabel("CABIN OVERVIEW")
         today = date.today()
@@ -83,9 +74,17 @@ class HeaderWidget(QWidget):
         self.date_label = QLabel(self.formatted_cur_date)
         self.time_label = QLabel(self.current_time)
 
+        self.date_label.setFont(QFont("Arial", 18))
+        self.time_label.setFont(QFont("Arial", 18))
+        self.header_title.setFont(QFont("Arial", 14))
+
+        self.layout.addStretch()
         self.layout.addWidget(self.date_label)
+        self.layout.addStretch()
         self.layout.addWidget(self.header_title)
+        self.layout.addStretch()
         self.layout.addWidget(self.time_label)
+        self.layout.addStretch()
 
         self.setStyleSheet("""
             QLabel {color: white;}
@@ -94,7 +93,6 @@ class HeaderWidget(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_labels)
         self.timer.start(1000)
-
 
     def update_labels(self):
         today = date.today()
@@ -156,7 +154,7 @@ class FooterButtonsWidget(QWidget):
 
         # Set the brush to black and draw the trapezoid
         painter.setBrush(QColor("#000000"))
-        painter.setPen(Qt.NoPen)  # Remove the border
+        painter.setPen(Qt.NoPen)                # Remove the border
         painter.drawPolygon(trapezoid)
 
         # Apply the shape to the widget

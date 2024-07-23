@@ -1,8 +1,7 @@
 import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QPainter, QCursor, QColor
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QHBoxLayout, QGridLayout, QPushButton
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
@@ -18,14 +17,14 @@ class MainWidget(QWidget):
     def __init__(self):
         super().__init__()     
 
-        layout = QGridLayout()
+        layout = QVBoxLayout()
  
-        self.header_widget = HeaderWidget()
+        header_widget = HeaderWidget()
         self.temp_display = TempWidget()
         self.humidity_display = HumidityWidget()
         self.pressure_display = PressureWidget()
         self.dew_point_display = DewPointWidget()
-        self.dragon_image_widget = DragonImageWidget(600, 400)
+        self.dragon_image_widget = DragonImageWidget(width=275, height=550)
         buttons_widget = FooterButtonsWidget()
         self.eject_button = QPushButton("EJECT")
 
@@ -39,7 +38,7 @@ class MainWidget(QWidget):
             QLabel#dragon_image {
                 border: none;
             }
-            QPushButton {
+            QPushButton {       
                 background-color: transparent;
                 border: none;
                 color: white;
@@ -50,19 +49,7 @@ class MainWidget(QWidget):
             }
         """)
 
-        # Add widgets to the grid layout with appropriate spanning and alignment
-        layout.addWidget(self.header_widget, 0, 0, 1, 2)               # Header spans across both columns in row 0
-        layout.addWidget(self.humidity_display, 1, 0)                  # Humidity display in row 1, column 0
-        layout.addWidget(self.temp_display, 1, 1)                      # Temperature display in row 1, column 1
-        layout.addWidget(self.pressure_display, 2, 0)                  # Pressure display in row 2, column 0
-        layout.addWidget(self.dew_point_display, 2, 1)                 # Dew point display in row 2, column 1
-        layout.addWidget(self.dragon_image_widget, 1, 2, 2, 1, Qt.AlignCenter)  # Dragon image spans rows 1 and 2, and column 2
-        layout.addWidget(buttons_widget, 3, 0, 1, 3, Qt.AlignCenter)   # Buttons widget spans across all columns in row 3
-        layout.addWidget(self.eject_button, 3, 0)
-
-        # Add stretch to push the buttons widget to the bottom
-        layout.setRowStretch(2, 1)
-        layout.setRowStretch(3, 0)
+        layout.addWidget(header_widget)
 
         self.setCursor(Qt.BlankCursor)
         self.eject_button.clicked.connect(self.eject_dashboard)
