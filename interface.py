@@ -1,7 +1,7 @@
 import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
@@ -12,6 +12,68 @@ api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&or
 api_url = f"{launch_api_url}?{api_url_filters}"
 rocket_launch_obj = RocketLaunchesData(api_url)
 
+class CenterGridWidget(QWidget):
+    def __init__(self):
+        super().__init__()  
+
+        layout = QGridLayout()
+        self.setLayout(layout)
+
+        self.temp_display = TempWidget()
+        self.humidity_display = HumidityWidget()
+        self.pressure_display = PressureWidget()
+        self.dew_point_display = DewPointWidget()
+        dragon_image_widget = DragonImageWidget(width=200, height=400)
+
+        # Display Dragon and BME data in grid
+        layout.addWidget(self.humidity_display, 0, 0)
+        layout.addWidget(self.temp_display, 0, 2)
+        layout.addWidget(dragon_image_widget, 0, 1, 2, 1)
+        layout.addWidget(self.pressure_display, 1, 0)
+        layout.addWidget(self.dew_point_display, 1, 2)
+
+        # Update every second
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_labels)
+        self.timer.start(1000)
+
+        self.setLayout(layout)
+
+    def update_labels(self):
+        # BME data
+        temp, humidity, pressure, dew_point = bme280_results()
+        self.temp_display.setValue(float(temp))
+        self.pressure_display.setValue(float(pressure))
+        self.humidity_display.setValue(float(humidity))
+        self.dew_point_display.setValue(float(dew_point))
+
+
+class BottomWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        layout_h = QHBoxLayout()
+        layout.addLayout(layout_h)  # Correctly adding the horizontal layout
+
+        # Move EJECT button to left
+        self.eject_button = QPushButton("EJECT")
+        layout_h.addWidget(self.eject_button)
+        layout_h.addStretch()
+
+        buttons_widget = FooterButtonsWidget()
+        layout_h.addWidget(buttons_widget)  # Adding widget to layout
+        layout_h.addStretch()
+
+        self.eject_button.setStyleSheet("background-color: transparent; border: 2px solid white; color: white; padding: 5px; border-radius: 7.5px;")
+        self.eject_button.clicked.connect(self.eject_dashboard)
+
+    def eject_dashboard(self):
+        print("Safely ejected out of capsule.")
+        QApplication.quit()
+
 
 class MainWidget(QWidget):
     def __init__(self):
@@ -20,15 +82,9 @@ class MainWidget(QWidget):
         layout = QVBoxLayout()
  
         header_widget = HeaderWidget()
-        self.temp_display = TempWidget()
-        self.humidity_display = HumidityWidget()
-        self.pressure_display = PressureWidget()
-        self.dew_point_display = DewPointWidget()
-        self.dragon_image_widget = DragonImageWidget(width=275, height=550)
-        buttons_widget = FooterButtonsWidget()
-        self.eject_button = QPushButton("EJECT")
+        center_grid_widget = CenterGridWidget()
+        bottom_widget = BottomWidget()
 
-        self.eject_button.setStyleSheet("background-color: transparent; border: 2px solid white; color: white; padding: 5px; border-radius: 7.5px;")
         self.setStyleSheet("""
             background-color: #050A30;
             QLabel {
@@ -50,32 +106,15 @@ class MainWidget(QWidget):
         """)
 
         layout.addWidget(header_widget)
-
-        self.setCursor(Qt.BlankCursor)
-        self.eject_button.clicked.connect(self.eject_dashboard)
-
-        # Update every second
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_labels)
-        self.timer.start(1000)
+        layout.addWidget(center_grid_widget)
+        layout.addWidget(bottom_widget)
 
         self.setLayout(layout)
-
-    def update_labels(self):
-        # BME data
-        temp, humidity, pressure, dew_point = bme280_results()
-        self.temp_display.setValue(float(temp))
-        self.pressure_display.setValue(float(pressure))
-        self.humidity_display.setValue(float(humidity))
-        self.dew_point_display.setValue(float(dew_point))
+        self.setCursor(Qt.BlankCursor)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
-
-    def eject_dashboard(self, event):
-        print("Safely ejected out of capsule.")
-        QApplication.quit()
 
 
 # TODO: List of launches
