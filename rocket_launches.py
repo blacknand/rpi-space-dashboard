@@ -1,11 +1,5 @@
-"""
-Uses the LL2 API to get upcoming rocket launches
-https://ll.thespacedevs.com/2.2.0/swagger/#/launch/launch_upcoming_list
-"""
-
 import requests
 import json
-import sys
 from datetime import datetime, timedelta, timezone, date
 
 class RocketLaunchesData:

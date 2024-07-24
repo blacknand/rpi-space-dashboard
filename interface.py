@@ -1,7 +1,7 @@
 import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QDialog, QStackedWidget
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
@@ -94,13 +94,25 @@ class BottomWidget(QWidget):
 class MainWidget(QWidget):
     def __init__(self):
         super().__init__()     
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
  
+        self.stacked_widget = QStackedWidget(self)
+
         self.header_widget = HeaderWidget()
         self.center_grid_widget = CenterGridWidget()
         self.bottom_widget = BottomWidget()
+
+        # Create other views
+        self.launch_view = LaunchWidget()
+        self.apod_view = ApodWidget()
+        self.mars_view = MarsWidget()
+        self.spacex_view = SpaceXWidget()
+
+        # Add widgets to QStackedWidget
+        self.stacked_widget.addWidget(self.center_grid_widget)
+        self.stacked_widget.addWidget(self.launch_view)
+        self.stacked_widget.addWidget(self.apod_view)
+        self.stacked_widget.addWidget(self.mars_view)
+        self.stacked_widget.addWidget(self.spacex_view)
 
         self.setStyleSheet("""
             background-color: #050A30;
@@ -130,7 +142,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_spacex_widget)
 
         self.header_widget.setParent(self)
-        self.center_grid_widget.setParent(self)
+        # self.center_grid_widget.setParent(self)
         self.bottom_widget.setParent(self)
 
         self.setCursor(Qt.BlankCursor)
@@ -145,7 +157,7 @@ class MainWidget(QWidget):
         self.updateWidgetPositions()
 
     def updateWidgetPositions(self):
-        self.header_widget.move((self.width() - self.header_widget.width()) // 2, -215)
+        self.header_widget.move((self.width() - self.header_widget.width()) // 2, 0)
         self.center_grid_widget.move(60, 25)
         self.bottom_widget.setFixedWidth(self.width())
         self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
@@ -156,24 +168,24 @@ class MainWidget(QWidget):
         self.center_grid_widget.move_dew_point_display(-20, -70)  
 
     def display_main_widget(self):
-        self.show_widget(MainWidget)
+        self.stacked_widget.setCurrentWidget(self.center_grid_widget)
+        self.header_widget.show()
 
     def display_rocket_launches_widget(self):
-        self.show_widget(LaunchWidget)
+        self.stacked_widget.setCurrentWidget(self.launch_view)
+        self.header_widget.hide()
 
     def display_apod_widget(self):
-        self.show_widget(ApodWidget)
+        self.stacked_widget.setCurrentWidget(self.apod_view)
+        self.header_widget.hide()
 
     def display_mars_widget(self):
-        self.show_widget(MarsWidget)
+        self.stacked_widget.setCurrentWidget(self.mars_view)
+        self.header_widget.hide()
 
     def display_spacex_widget(self):
-        self.show_widget(SpaceXWidget)
-
-    def show_widget(self, widget_class):
-        self.child_window = widget_class()
-        self.child_window.setWindowModality(Qt.ApplicationModal)
-        self.child_window.show()
+        self.stacked_widget.setCurrentWidget(self.spacex_view)
+        self.header_widget.hide()
 
 
 
