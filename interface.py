@@ -144,7 +144,7 @@ class MainWidget(QWidget):
 
     def updateWidgetPositions(self):
         self.header_widget.move((self.width() - self.header_widget.width()) // 2, -215)
-        self.center_grid_widget.move(50, 25)
+        self.center_grid_widget.move(60, 25)
         self.bottom_widget.setFixedWidth(self.width())
         self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
 

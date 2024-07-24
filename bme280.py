@@ -75,7 +75,7 @@ class BMEDataWidget(QWidget):
 
         pen, pen2 = QPen(), QPen()
         pen.setCapStyle(Qt.FlatCap)
-        pen.setColor(self.color)
+        pen.setColor(self.get_gradient_color())
         pen_width = self.width() / 25                       # Adjust this value to change the progress bar thickness
         pen.setWidth(pen_width)
         painter.strokePath(path, pen)
@@ -191,7 +191,7 @@ class DewPointWidget(BMEDataWidget):
 
     def get_gradient_color(self):
         if self.value < 50:
-            return QColor(225, 8, 33)
+            return QColor(123, 225, 8)
         elif 51 <= self.value <= 60:
             return QColor(123, 225, 8) 
         elif 61 <= self.value <= 70:
