@@ -1,9 +1,9 @@
 from datetime import datetime, date
-from PySide6.QtGui import QPixmap,QIcon, QColor, QPolygon, QPainter, QRegion
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
-from PySide6.QtGui import QPixmap, QColor, QFont
+from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
 from PySide6.QtCore import Qt, QRectF
 
 
@@ -33,8 +33,8 @@ class DragonImageWidget(QWidget):
         # Create the shadow effect to simulate the bottom glow
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(50)
-        shadow.setColor(QColor(255, 255, 255, 160))  # White glow
-        shadow.setOffset(0, 20)  # Set shadow offset for more emphasis on the bottom
+        shadow.setColor(QColor(255, 255, 255, 160))                 # White glow
+        shadow.setOffset(0, 20)                                     # Set shadow offset for more emphasis on the bottom
         self.capsule_item.setGraphicsEffect(shadow)
 
         self.scene.addItem(self.capsule_item)
@@ -157,4 +157,3 @@ class FooterButtonsWidget(QWidget):
         # Apply the shape to the widget
         region = QRegion(trapezoid)
         self.setMask(region)
-        

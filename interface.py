@@ -5,12 +5,8 @@ from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridL
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
+from rocket_launches import RocketLaunchesData
 
-# Config
-launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
-api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
-api_url = f"{launch_api_url}?{api_url_filters}"
-rocket_launch_obj = RocketLaunchesData(api_url)
 
 class CenterGridWidget(QWidget):
     def __init__(self):
@@ -28,7 +24,7 @@ class CenterGridWidget(QWidget):
         # Display Dragon and BME data in grid
         layout.addWidget(self.humidity_display, 0, 0)
         layout.addWidget(self.temp_display, 0, 2)
-        layout.addWidget(dragon_image_widget, 0, 1, 2, 1)  # Position the dragon_image_widget correctly
+        layout.addWidget(dragon_image_widget, 0, 1, 2, 1)  
         layout.addWidget(self.pressure_display, 1, 0)
         layout.addWidget(self.dew_point_display, 1, 2)
 
@@ -39,8 +35,8 @@ class CenterGridWidget(QWidget):
 
         self.setLayout(layout)
 
-        layout.setContentsMargins(0, -300, 0, 0)  # Move everything up by reducing top margin
-        layout.setVerticalSpacing(20)  # Adjust vertical spacing as needed
+        layout.setContentsMargins(0, -300, 0, 0)                    # Move everything up by reducing top margin
+        layout.setVerticalSpacing(20)  
 
     def update_labels(self):
         # BME data
@@ -61,8 +57,7 @@ class CenterGridWidget(QWidget):
 
     def move_dew_point_display(self, dx, dy):
         self.dew_point_display.move(self.dew_point_display.x() + dx, self.dew_point_display.y() + dy)
-
-
+        
 
 class BottomWidget(QWidget):
     def __init__(self):
@@ -84,8 +79,8 @@ class BottomWidget(QWidget):
 
         self.eject_button.move(20, 15)
 
-        buttons_widget = FooterButtonsWidget()
-        layout_h.addWidget(buttons_widget)  
+        self.buttons_widget = FooterButtonsWidget()
+        layout_h.addWidget(self.buttons_widget)  
 
         # Ensure the BottomWidget expands horizontally
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -127,6 +122,13 @@ class MainWidget(QWidget):
             }
         """)
 
+        # Links all buttons in footer to different displays
+        self.bottom_widget.buttons_widget.dragon_button.clicked.connect(self.display_main_widget)
+        self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
+        self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
+        self.bottom_widget.buttons_widget.rover_button.clicked.connect(self.display_mars_widget)
+        self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_spacex_widget)
+
         self.header_widget.setParent(self)
         self.center_grid_widget.setParent(self)
         self.bottom_widget.setParent(self)
@@ -148,11 +150,30 @@ class MainWidget(QWidget):
         self.bottom_widget.setFixedWidth(self.width())
         self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
 
-        # Move individual displays
-        self.center_grid_widget.move_temp_display(-75, -10)  # Move temperature display
-        self.center_grid_widget.move_humidity_display(110, -10)  # Move humidity display
-        self.center_grid_widget.move_pressure_display(55, -70)  # Move pressure display
-        self.center_grid_widget.move_dew_point_display(-20, -70)  # Move dew point display
+        self.center_grid_widget.move_temp_display(-75, -10)
+        self.center_grid_widget.move_humidity_display(110, -10) 
+        self.center_grid_widget.move_pressure_display(55, -70) 
+        self.center_grid_widget.move_dew_point_display(-20, -70)  
+
+    def display_main_widget(self):
+        self.show_widget(MainWidget)
+
+    def display_rocket_launches_widget(self):
+        self.show_widget(LaunchWidget)
+
+    def display_apod_widget(self):
+        self.show_widget(ApodWidget)
+
+    def display_mars_widget(self):
+        self.show_widget(MarsWidget)
+
+    def display_spacex_widget(self):
+        self.show_widget(SpaceXWidget)
+
+    def show_widget(self, widget_class):
+        self.child_window = widget_class()
+        self.child_window.setWindowModality(Qt.ApplicationModal)
+        self.child_window.show()
 
 
 
@@ -160,7 +181,19 @@ class MainWidget(QWidget):
 class LaunchWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QLabel("ROCKET LAUNCHES", alignment=Qt.AlignCenter)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("TODO: Launch page"))
+
+        # Config
+        launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
+        api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
+        api_url = f"{launch_api_url}?{api_url_filters}"
+        rocket_launch_obj = RocketLaunchesData(api_url)
+
+
+
+        self.setLayout(layout)
 
 
 # TODO: Randomly selected SpaceX image
@@ -168,20 +201,29 @@ class SpaceXWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
+        layout = QVBoxLayout()
+        layout.addWidget(self.text)
+        self.setLayout(layout)
 
 
 # TODO: APOD image
 class ApodWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QLabel("APOD", alignment=Qt.AlignCenter)
+        self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
+        layout = QVBoxLayout()
+        layout.addWidget(self.text)
+        self.setLayout(layout)
 
 
 # TODO: Mars data
 class MarsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QLabel("MARS DATA", alignment=Qt.AlignCenter)
+        self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
+        layout = QVBoxLayout()
+        layout.addWidget(self.text)
+        self.setLayout(layout)
 
 
 if __name__ == "__main__":
