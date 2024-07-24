@@ -149,10 +149,10 @@ class MainWidget(QWidget):
         self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
 
         # Move individual displays
-        self.center_grid_widget.move_temp_display(-80, -10)  # Move temperature display
+        self.center_grid_widget.move_temp_display(-75, -10)  # Move temperature display
         self.center_grid_widget.move_humidity_display(110, -10)  # Move humidity display
         self.center_grid_widget.move_pressure_display(55, -70)  # Move pressure display
-        self.center_grid_widget.move_dew_point_display(-30, -70)  # Move dew point display
+        self.center_grid_widget.move_dew_point_display(-20, -70)  # Move dew point display
 
 
 
