@@ -28,7 +28,7 @@ class CenterGridWidget(QWidget):
         # Display Dragon and BME data in grid
         layout.addWidget(self.humidity_display, 0, 0)
         layout.addWidget(self.temp_display, 0, 2)
-        layout.addWidget(dragon_image_widget, 0, 1, 2, 1)
+        layout.addWidget(dragon_image_widget, 0, 1, 2, 1)  # Position the dragon_image_widget correctly
         layout.addWidget(self.pressure_display, 1, 0)
         layout.addWidget(self.dew_point_display, 1, 2)
 
@@ -39,6 +39,9 @@ class CenterGridWidget(QWidget):
 
         self.setLayout(layout)
 
+        layout.setContentsMargins(0, -300, 0, 0)  # Move everything up by reducing top margin
+        layout.setVerticalSpacing(20)  # Adjust vertical spacing as needed
+
     def update_labels(self):
         # BME data
         temp, humidity, pressure, dew_point = bme280_results()
@@ -46,6 +49,19 @@ class CenterGridWidget(QWidget):
         self.pressure_display.setValue(float(pressure))
         self.humidity_display.setValue(float(humidity))
         self.dew_point_display.setValue(float(dew_point))
+
+    def move_temp_display(self, dx, dy):
+        self.temp_display.move(self.temp_display.x() + dx, self.temp_display.y() + dy)
+
+    def move_humidity_display(self, dx, dy):
+        self.humidity_display.move(self.humidity_display.x() + dx, self.humidity_display.y() + dy)
+
+    def move_pressure_display(self, dx, dy):
+        self.pressure_display.move(self.pressure_display.x() + dx, self.pressure_display.y() + dy)
+
+    def move_dew_point_display(self, dx, dy):
+        self.dew_point_display.move(self.dew_point_display.x() + dx, self.dew_point_display.y() + dy)
+
 
 
 class BottomWidget(QWidget):
@@ -85,6 +101,7 @@ class MainWidget(QWidget):
         super().__init__()     
 
         layout = QVBoxLayout()
+        self.setLayout(layout)
  
         self.header_widget = HeaderWidget()
         self.center_grid_widget = CenterGridWidget()
@@ -126,11 +143,18 @@ class MainWidget(QWidget):
         self.updateWidgetPositions()
 
     def updateWidgetPositions(self):
-        self.header_widget.move(0, 0)
-        self.center_grid_widget.move(50, 50)
-        # Adjust BottomWidget's width to span the full width of the parent
+        self.header_widget.move((self.width() - self.header_widget.width()) // 2, -215)
+        self.center_grid_widget.move(50, 25)
         self.bottom_widget.setFixedWidth(self.width())
         self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
+
+        # Move individual displays
+        self.center_grid_widget.move_temp_display(-80, -10)  # Move temperature display
+        self.center_grid_widget.move_humidity_display(110, -10)  # Move humidity display
+        self.center_grid_widget.move_pressure_display(55, -70)  # Move pressure display
+        self.center_grid_widget.move_dew_point_display(-30, -70)  # Move dew point display
+
+
 
 # TODO: List of launches
 class LaunchWidget(QWidget):

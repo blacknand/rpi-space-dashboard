@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from PySide6.QtGui import QPixmap,QIcon, QColor, QPolygon, QPainter, QRegion
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
 from PySide6.QtGui import QPixmap, QColor, QFont
@@ -74,13 +74,13 @@ class HeaderWidget(QWidget):
         self.time_label.setFont(QFont("Arial", 18))
         self.header_title.setFont(QFont("Arial", 14))
 
-        self.layout.addStretch()
+        self.layout.addSpacerItem(QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout.addWidget(self.date_label)
-        self.layout.addStretch()
+        self.layout.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout.addWidget(self.header_title)
-        self.layout.addStretch()
+        self.layout.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout.addWidget(self.time_label)
-        self.layout.addStretch()
+        self.layout.addSpacerItem(QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
         self.setStyleSheet("""
             QLabel {color: white;}
