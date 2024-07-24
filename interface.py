@@ -146,7 +146,10 @@ class MainWidget(QWidget):
         self.bottom_widget.setParent(self)
 
         self.setCursor(Qt.BlankCursor)
+        
+        self.center_positioned = False
         self.updateWidgetPositions()
+        self.display_main_widget()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
@@ -162,14 +165,19 @@ class MainWidget(QWidget):
         self.bottom_widget.setFixedWidth(self.width())
         self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
 
-        self.center_grid_widget.move_temp_display(-75, -10)
-        self.center_grid_widget.move_humidity_display(110, -10) 
-        self.center_grid_widget.move_pressure_display(55, -70) 
-        self.center_grid_widget.move_dew_point_display(-20, -70)  
+        # Ensure proper positioning of center_grid_widget elements
+        if self.stacked_widget.currentWidget() == self.center_grid_widget and not self.center_positioned:
+            self.center_grid_widget.move(60, 25)
+            self.center_grid_widget.move_temp_display(-75, -10)
+            self.center_grid_widget.move_humidity_display(110, -10)
+            self.center_grid_widget.move_pressure_display(55, -70)
+            self.center_grid_widget.move_dew_point_display(-20, -70)
+            self.center_positioned = True
 
     def display_main_widget(self):
         self.stacked_widget.setCurrentWidget(self.center_grid_widget)
         self.header_widget.show()
+        self.updateWidgetPositions()  # Ensure proper positioning when displayed
 
     def display_rocket_launches_widget(self):
         self.stacked_widget.setCurrentWidget(self.launch_view)
