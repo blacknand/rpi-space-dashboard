@@ -1,7 +1,7 @@
 import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
@@ -23,7 +23,7 @@ class CenterGridWidget(QWidget):
         self.humidity_display = HumidityWidget()
         self.pressure_display = PressureWidget()
         self.dew_point_display = DewPointWidget()
-        dragon_image_widget = DragonImageWidget(width=200, height=400)
+        dragon_image_widget = DragonImageWidget(width=300, height=600)
 
         # Display Dragon and BME data in grid
         layout.addWidget(self.humidity_display, 0, 0)
@@ -56,19 +56,24 @@ class BottomWidget(QWidget):
         self.setLayout(layout)
 
         layout_h = QHBoxLayout()
-        layout.addLayout(layout_h)  # Correctly adding the horizontal layout
+        layout.addLayout(layout_h)  
 
-        # Move EJECT button to left
-        self.eject_button = QPushButton("EJECT")
-        layout_h.addWidget(self.eject_button)
-        layout_h.addStretch()
+        self.eject_button = QPushButton("EJECT", self)
+        self.eject_button.setStyleSheet(
+            "background-color: white; border: 2px solid white; padding: 10px; border-radius: 7.5px; width: 100px;"
+        )
+        self.eject_button.setMaximumWidth(100) 
+        self.eject_button.setFixedSize(100, 40)
+        self.eject_button.clicked.connect(self.eject_dashboard)
+
+        self.eject_button.move(20, 15)
 
         buttons_widget = FooterButtonsWidget()
-        layout_h.addWidget(buttons_widget)  # Adding widget to layout
-        layout_h.addStretch()
+        layout_h.addWidget(buttons_widget)  
 
-        self.eject_button.setStyleSheet("background-color: transparent; border: 2px solid white; color: white; padding: 5px; border-radius: 7.5px;")
-        self.eject_button.clicked.connect(self.eject_dashboard)
+        # Ensure the BottomWidget expands horizontally
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setFixedHeight(80)  
 
     def eject_dashboard(self):
         print("Safely ejected out of capsule.")
@@ -81,9 +86,9 @@ class MainWidget(QWidget):
 
         layout = QVBoxLayout()
  
-        header_widget = HeaderWidget()
-        center_grid_widget = CenterGridWidget()
-        bottom_widget = BottomWidget()
+        self.header_widget = HeaderWidget()
+        self.center_grid_widget = CenterGridWidget()
+        self.bottom_widget = BottomWidget()
 
         self.setStyleSheet("""
             background-color: #050A30;
@@ -105,17 +110,27 @@ class MainWidget(QWidget):
             }
         """)
 
-        layout.addWidget(header_widget)
-        layout.addWidget(center_grid_widget)
-        layout.addWidget(bottom_widget)
+        self.header_widget.setParent(self)
+        self.center_grid_widget.setParent(self)
+        self.bottom_widget.setParent(self)
 
-        self.setLayout(layout)
         self.setCursor(Qt.BlankCursor)
+        self.updateWidgetPositions()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updateWidgetPositions()
+
+    def updateWidgetPositions(self):
+        self.header_widget.move(0, 0)
+        self.center_grid_widget.move(50, 50)
+        # Adjust BottomWidget's width to span the full width of the parent
+        self.bottom_widget.setFixedWidth(self.width())
+        self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
 
 # TODO: List of launches
 class LaunchWidget(QWidget):

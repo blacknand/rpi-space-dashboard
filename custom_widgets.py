@@ -11,51 +11,47 @@ class DragonImageWidget(QWidget):
     def __init__(self, width=None, height=None):
         super().__init__()
 
-        self.image_path = "images/spacex_images/file.png" 
+        self.image_path = "images/spacex_images/file.png"
         self.image = QPixmap(self.image_path)
 
         if width is None or height is None:
             width = self.image.width()
             height = self.image.height()
 
-        self.desired_width = width
-        self.desired_height = height
+        # Scale the image to the desired size
+        self.scaled_image = self.image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         # Create a QGraphicsScene
         self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene, self)
-        self.view.setStyleSheet("background: transparent; border: none;") 
+        self.view.setStyleSheet("background: transparent; border: none;")
+        self.view.setRenderHint(QPainter.Antialiasing)
+        self.view.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        self.capsule_item = QGraphicsPixmapItem(self.image)
+        self.capsule_item = QGraphicsPixmapItem(self.scaled_image)
 
         # Create the shadow effect to simulate the bottom glow
         shadow = QGraphicsDropShadowEffect()
         shadow.setBlurRadius(50)
-        shadow.setColor(QColor(255, 255, 255, 160))             # White glow
-        shadow.setOffset(0, 20)                                 # Set shadow offset for more emphasis on the bottom
+        shadow.setColor(QColor(255, 255, 255, 160))  # White glow
+        shadow.setOffset(0, 20)  # Set shadow offset for more emphasis on the bottom
         self.capsule_item.setGraphicsEffect(shadow)
+
         self.scene.addItem(self.capsule_item)
+        self.scene.setSceneRect(QRectF(self.scaled_image.rect()))
 
         # Set up the layout
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.view)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        self.resize_image(width, height)
+        self.setLayout(self.layout)
 
-    def resize_image(self, width, height):
-        self.image = QPixmap(self.image_path).scaled(width, height, Qt.KeepAspectRatio)
-        self.capsule_item.setPixmap(self.image)
-        self.scene.setSceneRect(QRectF(self.image.rect()))
-        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
-        self.resize(width, height)
+        # Set fixed size for the widget based on the scaled image size
+        self.setFixedSize(self.scaled_image.size())
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.resize_image(self.width(), self.height())
-        
     def sizeHint(self):
-        return QSize(self.desired_width, self.desired_height)
+        return QSize(self.scaled_image.width(), self.scaled_image.height())
 
 
 
@@ -120,6 +116,7 @@ class FooterButtonsWidget(QWidget):
         layout.addWidget(self.apod_button)
         layout.addWidget(self.rover_button)
         layout.addWidget(self.spacex_button)
+        self.setFixedSize(60,400)
 
         self.setMinimumHeight(60)
         self.setMinimumWidth(400)
