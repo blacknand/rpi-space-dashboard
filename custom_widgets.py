@@ -127,6 +127,8 @@ class FooterButtonsWidget(QWidget):
             }
         """)
 
+        self.current_button = None  # Track the currently active button
+
     def create_icon_button(self, icon_path):
         button = QPushButton()
         button.setIcon(QIcon(icon_path))
@@ -135,6 +137,10 @@ class FooterButtonsWidget(QWidget):
         button.setStyleSheet("QPushButton { background-color: transparent; border: none; }")
         return button
     
+    def set_active_button(self, button):
+        self.current_button = button
+        self.update()  # Trigger a repaint
+
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
@@ -157,3 +163,10 @@ class FooterButtonsWidget(QWidget):
         # Apply the shape to the widget
         region = QRegion(trapezoid)
         self.setMask(region)
+
+        # Draw the line under the active button
+        if self.current_button:
+            button_rect = self.current_button.geometry()
+            line_y = button_rect.bottom() + 5  # Position the line just below the button
+            painter.setPen(QColor("white"))
+            painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)

@@ -184,26 +184,31 @@ class MainWidget(QWidget):
             self.center_grid_widget.move_dew_point_display(-80, -60)
             self.center_positioned = True
 
-    def display_main_widget(self):
+    def display_main_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.center_grid_widget)
         self.header_widget.show()
+        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.dragon_button)
         self.updateWidgetPositions()  # Ensure proper positioning when displayed
 
-    def display_rocket_launches_widget(self):
+    def display_rocket_launches_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.launch_view)
         self.header_widget.hide()
+        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.fh_button)
 
-    def display_apod_widget(self):
+    def display_apod_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.apod_view)
         self.header_widget.hide()
+        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.apod_button)
 
-    def display_mars_widget(self):
+    def display_mars_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.mars_view)
         self.header_widget.hide()
+        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.rover_button)
 
-    def display_spacex_widget(self):
+    def display_spacex_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.spacex_view)
         self.header_widget.hide()
+        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.spacex_button)
 
 
 
