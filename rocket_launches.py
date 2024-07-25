@@ -24,7 +24,6 @@ class RocketLaunchesData:
         self.query_results = self.rocket_query_results()
         if self.query_results is None:
             raise Exception(f"Error writing to {file}. No launch data")
-
         try:
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(self.query_results, f, ensure_ascii=False, indent=4)
@@ -32,7 +31,8 @@ class RocketLaunchesData:
             print(f"RocketLaunchesData::json_file_dump: Exception has occured: {e}")
 
     def get_filtered_results(self) -> json:
-        self.filtered_results = [(result["name"], result["lsp_name"]) for result in self.query_results["results"]]
+        self.filtered_results = [(result["name"], result["lsp_name"], result["status"]["abbrev"], result["image"], 
+                                  result["net"], result["mission"], result["mission_type"], result["pad"], result["location"]) for result in self.query_results["results"]]
         return self.filtered_results
 
     def json_test_filter(self, json_file: str) -> json:
@@ -54,10 +54,11 @@ class RocketLaunchesData:
             return api_throttle_results.json()
         
     def updated_net(self) -> str:
+        # Remove launches past T+ 15 minutes
         current_time = datetime.now(timezone.utc)
         updated_results = []
-        for i in self.filtered_test_results:
-            launch_time = datetime.strptime(i[-1], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        for i in self.filtered_results:
+            launch_time = datetime.strptime(i[4], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
             time_difference = launch_time - current_time
             if time_difference.total_seconds() < 0:
                 launch_time += timedelta(minutes=15)
@@ -66,11 +67,14 @@ class RocketLaunchesData:
             if current_time - launch_time <= timedelta(minutes=15):
                 updated_results.append({
                     "name": i[0],
-                    "organization": i[1],
+                    "lsp": i[1],
                     "status": i[2],
                     "image": i[3],
-                    "net": launch_time.isoformat(),
-                    "countdown": self.format_countdown(time_difference)
+                    "countdown": self.format_countdown(time_difference),
+                    "mission": i[5],
+                    "mission_type": i[6],
+                    "pad": i[7],
+                    "location": i[8]
                 })
 
         return updated_results
@@ -93,3 +97,14 @@ class RocketLaunchesData:
         formatted_cur_date = f'{today.strftime("%a")}, {today.strftime("%b")} {today.strftime("%d")}'
         current_time = datetime.now().strftime("%H:%M:%S")
         return [formatted_cur_date, current_time]
+    
+
+launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
+api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
+api_url = f"{launch_api_url}?{api_url_filters}"
+rocket_launch_obj = RocketLaunchesData(api_url)
+
+rocket_launch_obj.rocket_query_results()
+rocket_launch_obj.get_filtered_results()
+while True: 
+    print(rocket_launch_obj.updated_net(), "\n\n")
