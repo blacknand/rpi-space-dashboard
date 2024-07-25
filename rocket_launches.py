@@ -71,9 +71,8 @@ class RocketLaunchesData:
                     "lsp": i[1],
                     "status": i[2],
                     "image": i[3],
-                    "net": dt.strftime("%d %B, %H:%M"),
+                    "net": dt.strftime("%d %B"),
                     "countdown": self.format_countdown(time_difference),
-                    "mission": i[5],
                     "mission_type": i[6],
                     "pad": i[7],
                     "location": i[8]

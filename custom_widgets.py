@@ -2,9 +2,10 @@ from datetime import datetime, date
 from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
-from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect, QGridLayout
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
 from PySide6.QtCore import Qt, QRectF
+import requests
 
 
 class DragonImageWidget(QWidget):
@@ -70,9 +71,9 @@ class HeaderWidget(QWidget):
         self.date_label = QLabel(self.formatted_cur_date)
         self.time_label = QLabel(self.current_time)
 
-        self.date_label.setFont(QFont("Arial", 18))
-        self.time_label.setFont(QFont("Arial", 18))
-        self.header_title.setFont(QFont("Arial", 14))
+        self.date_label.setFont(QFont("Arial", 18, QFont.Bold))
+        self.time_label.setFont(QFont("Arial", 18, QFont.Bold))
+        self.header_title.setFont(QFont("Arial", 14, QFont.Bold))
 
         self.layout.addSpacerItem(QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.layout.addWidget(self.date_label)
@@ -170,3 +171,69 @@ class FooterButtonsWidget(QWidget):
             line_y = button_rect.bottom() + 5  # Position the line just below the button
             painter.setPen(QColor("white"))
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
+
+
+class LaunchEntryWidget(QWidget):
+    def __init__(self, launch_data):
+        super().__init__()
+
+        self.launch_data = launch_data
+
+        layout = QHBoxLayout()
+
+        # Display image
+        # image_label = QLabel(self)
+        # pixmap = QPixmap()
+        # pixmap.loadFromData(self.download_image(launch_data['image']))
+        # image_label.setPixmap(pixmap)
+        # image_label.setFixedSize(200, 200)
+        # image_label.setScaledContents(True)
+        # layout.addWidget(image_label)
+
+        self.info_layout = QVBoxLayout()
+
+        self.name = QLabel(launch_data["name"])
+        self.name.setFont(QFont("Arial", 14, QFont.Bold))
+        self.info_layout.addWidget(self.name)
+
+        self.lsp = QLabel(launch_data["lsp"])
+        self.lsp.setFont(QFont("Arial", 14, QFont.Bold))
+        self.info_layout.addWidget(self.lsp)
+
+        self.location = QLabel(f"{launch_data['location']} | {launch_data['pad']}")
+        self.location.setFont(QFont("Arial", 14, QFont.Bold))
+        self.info_layout.addWidget(self.location)
+
+        self.mission = QLabel(launch_data["mission_type"])
+        self.mission.setFont(QFont("Arial", 14, QFont.Bold))
+        self.info_layout.addWidget(self.mission)
+
+        self.countdown_label = QLabel()
+        self.countdown_label.setFont(QFont('Arial', 14, QFont.Bold))
+        self.info_layout.addWidget(self.countdown_label)
+        self.update_countdown()
+
+        self.time_data = QLabel(f"{launch_data['net']} | {launch_data['status']}")
+        self.time_data.setFont(QFont("Arial", 14, QFont.Bold))
+        self.info_layout.addWidget(self.time_data)
+
+        # Create a widget for the info_layout and add it to the layout
+        info_widget = QWidget()
+        info_widget.setLayout(self.info_layout)
+        layout.addWidget(info_widget)
+
+        self.setLayout(layout)
+
+        # Timer to update countdown every second
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_countdown)
+        self.timer.start(1000)
+
+    def update_countdown(self):
+        countdown_dict = self.launch_data["countdown"]
+        countdown_text = f"T- {countdown_dict['days']:02d} : {countdown_dict['hours']:02d} : {countdown_dict['minutes']:02d} : {countdown_dict['seconds']:02d}"
+        self.countdown_label.setText(countdown_text)
+
+    def download_image(self, url):
+        response = requests.get(url)
+        return response.content

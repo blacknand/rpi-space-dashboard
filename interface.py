@@ -1,10 +1,10 @@
 import sys
 import signal
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QDialog, QStackedWidget
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
-from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget
+from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget, LaunchEntryWidget
 from rocket_launches import RocketLaunchesData
 
 
@@ -142,7 +142,6 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_spacex_widget)
 
         self.header_widget.setParent(self)
-        # self.center_grid_widget.setParent(self)
         self.bottom_widget.setParent(self)
         
         self.setCursor(Qt.BlankCursor)
@@ -211,22 +210,45 @@ class MainWidget(QWidget):
 class LaunchWidget(QWidget):
     def __init__(self):
         super().__init__()
-        
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("TODO: Launch page"))
 
-        # Config
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_area.setWidget(self.scroll_content)
+
+        self.layout.addWidget(self.scroll_area)
+
+        # Config for rocket launches
         launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
         api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
         api_url = f"{launch_api_url}?{api_url_filters}"
-        rocket_launch_obj = RocketLaunchesData(api_url)
+        self.rocket_launch_obj = RocketLaunchesData(api_url)
+        self.rocket_launch_obj.rocket_query_results()
+        self.rocket_launch_obj.get_filtered_results()
 
-        rocket_launch_obj.rocket_query_results()
-        rocket_launch_obj.get_filtered_results()
-        while True:
-            print(rocket_launch_obj.updated_net())
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_launches)
+        self.timer.start(1000)
 
-        self.setLayout(layout)
+    def update_launches(self):
+        launches = self.rocket_launch_obj.updated_net()
+        self.display_launches(launches)
+
+    def display_launches(self, launches):
+        # Clear the current layout
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        # Add new launch entries
+        for launch_data in launches:
+            launch_entry = LaunchEntryWidget(launch_data)
+            self.scroll_layout.addWidget(launch_entry)
 
 
 # TODO: Randomly selected SpaceX image
