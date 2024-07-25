@@ -147,8 +147,8 @@ class MainWidget(QWidget):
 
         self.setCursor(Qt.BlankCursor)
         
+        self.setCursor(Qt.BlankCursor)
         self.center_positioned = False
-        self.updateWidgetPositions()
         self.display_main_widget()
 
     def keyPressEvent(self, event):
@@ -160,19 +160,27 @@ class MainWidget(QWidget):
         self.updateWidgetPositions()
 
     def updateWidgetPositions(self):
-        self.header_widget.move((self.width() - self.header_widget.width()) // 2, 0)
-        self.center_grid_widget.move(60, 25)
+        header_y_position = 40  # Adjust this value to move header_widget along the Y-axis
+        stacked_widget_y_position = self.header_widget.height() + header_y_position  # Position stacked_widget below header_widget
+        bottom_widget_y_position = self.height() - self.bottom_widget.height()  # This keeps bottom_widget flush with the bottom
+
+        self.header_widget.move((self.width() - self.header_widget.width()) // 2, header_y_position - 40)
+        self.stacked_widget.setGeometry(0, stacked_widget_y_position, self.width(), self.height() - stacked_widget_y_position - self.bottom_widget.height())
         self.bottom_widget.setFixedWidth(self.width())
-        self.bottom_widget.move(0, self.height() - self.bottom_widget.height() + 10)
+        self.bottom_widget.move(0, bottom_widget_y_position + 10)
 
         # Ensure proper positioning of center_grid_widget elements
-        if self.stacked_widget.currentWidget() == self.center_grid_widget and not self.center_positioned:
-            self.center_grid_widget.move(60, 25)
+        if self.stacked_widget.currentWidget() == self.center_grid_widget:
+            center_grid_widget_y_offset = 500  # Adjust this value to move center_grid_widget down
+            self.center_grid_widget.setGeometry(0, center_grid_widget_y_offset, self.stacked_widget.width(), self.stacked_widget.height() - center_grid_widget_y_offset)
             self.center_grid_widget.move_temp_display(-75, -10)
             self.center_grid_widget.move_humidity_display(110, -10)
             self.center_grid_widget.move_pressure_display(55, -70)
             self.center_grid_widget.move_dew_point_display(-20, -70)
             self.center_positioned = True
+
+        # Ensure center_grid_widget's geometry fills the space correctly
+        self.center_grid_widget.setGeometry(0, 0, self.stacked_widget.width(), self.stacked_widget.height())
 
     def display_main_widget(self):
         self.stacked_widget.setCurrentWidget(self.center_grid_widget)
