@@ -60,6 +60,7 @@ class RocketLaunchesData:
         for i in self.filtered_results:
             launch_time = datetime.strptime(i[4], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
             time_difference = launch_time - current_time
+            dt = datetime.strptime(i[4], "%Y-%m-%dT%H:%M:%SZ")
             if time_difference.total_seconds() < 0:
                 launch_time += timedelta(minutes=15)
                 time_difference = launch_time - current_time
@@ -70,6 +71,7 @@ class RocketLaunchesData:
                     "lsp": i[1],
                     "status": i[2],
                     "image": i[3],
+                    "net": dt.strftime("%d %B, %H:%M"),
                     "countdown": self.format_countdown(time_difference),
                     "mission": i[5],
                     "mission_type": i[6],
@@ -97,14 +99,3 @@ class RocketLaunchesData:
         formatted_cur_date = f'{today.strftime("%a")}, {today.strftime("%b")} {today.strftime("%d")}'
         current_time = datetime.now().strftime("%H:%M:%S")
         return [formatted_cur_date, current_time]
-    
-
-launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
-api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
-api_url = f"{launch_api_url}?{api_url_filters}"
-rocket_launch_obj = RocketLaunchesData(api_url)
-
-rocket_launch_obj.rocket_query_results()
-rocket_launch_obj.get_filtered_results()
-while True: 
-    print(rocket_launch_obj.updated_net(), "\n\n")
