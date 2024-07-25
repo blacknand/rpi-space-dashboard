@@ -159,24 +159,19 @@ class MainWidget(QWidget):
 
     def updateWidgetPositions(self):
         # Fixed positions for 800x480 screen
-        header_y_position = 40  # Position header 40 pixels down from the top
-        stacked_widget_y_position = self.header_widget.height() + header_y_position  # Position stacked_widget below header_widget
-        bottom_widget_y_position = 480 - 70  # Fixed height of 480px and bottom_widget height of 50px
-
-        # Position header_widget (only visible in MainWidget)
+        header_y_position = 40 
+        bottom_widget_y_position = 480 - 70 
         self.header_widget.move((800 - self.header_widget.width()) // 2, header_y_position - 30)
+        self.stacked_widget.setGeometry(0, 0, 800, 480)             # Set stacked widget to cover whole screen
 
-        # Set stacked_widget to cover the full screen
-        self.stacked_widget.setGeometry(0, 0, 800, 480)
-
-        # Position bottom_widget always at the bottom
+        # Position bottom widget permanently flush with bottom of screen
         self.bottom_widget.setFixedWidth(800)
         self.bottom_widget.move(0, bottom_widget_y_position)
 
         # Ensure proper positioning of center_grid_widget elements
         if self.stacked_widget.currentWidget() == self.center_grid_widget:
-            center_grid_widget_y_offset = 52.5  # Adjust this value to move center_grid_widget down
-            center_grid_widget_height = self.stacked_widget.height() - center_grid_widget_y_offset  # Calculate the height
+            center_grid_widget_y_offset = 52.5              # Move center_grid_wdiget down
+            center_grid_widget_height = self.stacked_widget.height() - center_grid_widget_y_offset 
             self.center_grid_widget.setGeometry(0, center_grid_widget_y_offset, self.stacked_widget.width(), center_grid_widget_height)
             self.center_grid_widget.move_temp_display(-130, -20)      
             self.center_grid_widget.move_humidity_display(130, -20)
@@ -188,7 +183,7 @@ class MainWidget(QWidget):
         self.stacked_widget.setCurrentWidget(self.center_grid_widget)
         self.header_widget.show()
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.dragon_button)
-        self.updateWidgetPositions()  # Ensure proper positioning when displayed
+        self.updateWidgetPositions()            # Ensure proper positioning when displayed
 
     def display_rocket_launches_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.launch_view)
@@ -226,7 +221,10 @@ class LaunchWidget(QWidget):
         api_url = f"{launch_api_url}?{api_url_filters}"
         rocket_launch_obj = RocketLaunchesData(api_url)
 
-
+        rocket_launch_obj.rocket_query_results()
+        rocket_launch_obj.get_filtered_results()
+        while True:
+            print(rocket_launch_obj.updated_net())
 
         self.setLayout(layout)
 
