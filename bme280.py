@@ -1,35 +1,35 @@
-# import board
-# import math
-# from adafruit_bme280 import basic as adafruit_bme280
+import board
+import math
+from adafruit_bme280 import basic as adafruit_bme280
 from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QPainterPath
 from PySide6.QtWidgets import QWidget
 
 # I2C connection
-# i2c = board.I2C()
-# bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
-# bme280.sea_level_pressure = 1010                                    # Base calibration point
+i2c = board.I2C()
+bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c)
+bme280.sea_level_pressure = 1010                                    # Base calibration point
 
-# b = 17.62
-# c = 243.12
-# gamma = (b * bme280.temperature / (c + bme280.temperature)) + math.log(bme280.humidity / 100.0)
-# dewpoint = format((c * gamma) / (b * gamma), ".2f")
+b = 17.62
+c = 243.12
+gamma = (b * bme280.temperature / (c + bme280.temperature)) + math.log(bme280.humidity / 100.0)
+dewpoint = format((c * gamma) / (b * gamma), ".2f")
 
-# def bme280_results():
-#     temp = bme280.temperature
-#     humidity = bme280.relative_humidity
-#     pressure = bme280.pressure
-#     dew_point = float(dewpoint)
-#     return [temp, humidity, pressure, dew_point]
+def bme280_results():
+    temp = bme280.temperature
+    humidity = bme280.relative_humidity
+    pressure = bme280.pressure
+    dew_point = float(dewpoint)
+    return [temp, humidity, pressure, dew_point]
 
 
 # For testing purposes (BME data only available on R pi) - comment out during deployment
-def bme280_results():
-    temp = "28"
-    pressure = "1250"
-    humidity = "40"
-    dew_point = "10"
-    return [temp, humidity, pressure, dew_point]
+# def bme280_results():
+#     temp = "28"
+#     pressure = "1250"
+#     humidity = "40"
+#     dew_point = "10"
+#     return [temp, humidity, pressure, dew_point]
 
 
 # QT Widgets for BME data
@@ -114,7 +114,7 @@ class TempWidget(BMEDataWidget):
             min_value=-10,
             max_value=50,
             color=QColor(255, 0, 0),
-            start_angle=47.5,
+            start_angle=50,
             parent=parent
         )
 
@@ -139,7 +139,7 @@ class HumidityWidget(BMEDataWidget):
             min_value=0,
             max_value=100,
             color=QColor(255, 0, 0),
-            start_angle=95,
+            start_angle=67.5,
             parent=parent
         )
 

@@ -144,8 +144,6 @@ class MainWidget(QWidget):
         self.header_widget.setParent(self)
         # self.center_grid_widget.setParent(self)
         self.bottom_widget.setParent(self)
-
-        self.setCursor(Qt.BlankCursor)
         
         self.setCursor(Qt.BlankCursor)
         self.center_positioned = False
@@ -160,27 +158,31 @@ class MainWidget(QWidget):
         self.updateWidgetPositions()
 
     def updateWidgetPositions(self):
-        header_y_position = 40  # Adjust this value to move header_widget along the Y-axis
+        # Fixed positions for 800x480 screen
+        header_y_position = 40  # Position header 40 pixels down from the top
         stacked_widget_y_position = self.header_widget.height() + header_y_position  # Position stacked_widget below header_widget
-        bottom_widget_y_position = self.height() - self.bottom_widget.height()  # This keeps bottom_widget flush with the bottom
+        bottom_widget_y_position = 480 - 70  # Fixed height of 480px and bottom_widget height of 50px
 
-        self.header_widget.move((self.width() - self.header_widget.width()) // 2, header_y_position - 40)
-        self.stacked_widget.setGeometry(0, stacked_widget_y_position, self.width(), self.height() - stacked_widget_y_position - self.bottom_widget.height())
-        self.bottom_widget.setFixedWidth(self.width())
-        self.bottom_widget.move(0, bottom_widget_y_position + 10)
+        # Position header_widget (only visible in MainWidget)
+        self.header_widget.move((800 - self.header_widget.width()) // 2, header_y_position - 30)
+
+        # Set stacked_widget to cover the full screen
+        self.stacked_widget.setGeometry(0, 0, 800, 480)
+
+        # Position bottom_widget always at the bottom
+        self.bottom_widget.setFixedWidth(800)
+        self.bottom_widget.move(0, bottom_widget_y_position)
 
         # Ensure proper positioning of center_grid_widget elements
         if self.stacked_widget.currentWidget() == self.center_grid_widget:
-            center_grid_widget_y_offset = 500  # Adjust this value to move center_grid_widget down
-            self.center_grid_widget.setGeometry(0, center_grid_widget_y_offset, self.stacked_widget.width(), self.stacked_widget.height() - center_grid_widget_y_offset)
-            self.center_grid_widget.move_temp_display(-75, -10)
-            self.center_grid_widget.move_humidity_display(110, -10)
-            self.center_grid_widget.move_pressure_display(55, -70)
-            self.center_grid_widget.move_dew_point_display(-20, -70)
+            center_grid_widget_y_offset = 52.5  # Adjust this value to move center_grid_widget down
+            center_grid_widget_height = self.stacked_widget.height() - center_grid_widget_y_offset  # Calculate the height
+            self.center_grid_widget.setGeometry(0, center_grid_widget_y_offset, self.stacked_widget.width(), center_grid_widget_height)
+            self.center_grid_widget.move_temp_display(-130, -20)      
+            self.center_grid_widget.move_humidity_display(130, -20)
+            self.center_grid_widget.move_pressure_display(80, -60)
+            self.center_grid_widget.move_dew_point_display(-80, -60)
             self.center_positioned = True
-
-        # Ensure center_grid_widget's geometry fills the space correctly
-        self.center_grid_widget.setGeometry(0, 0, self.stacked_widget.width(), self.stacked_widget.height())
 
     def display_main_widget(self):
         self.stacked_widget.setCurrentWidget(self.center_grid_widget)

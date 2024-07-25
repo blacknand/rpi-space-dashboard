@@ -150,7 +150,7 @@ class FooterButtonsWidget(QWidget):
         ])
 
         # Set the brush to black and draw the trapezoid
-        painter.setBrush(QColor("#000000"))
+        painter.setBrush(QColor("#002B5A"))
         painter.setPen(Qt.NoPen)                # Remove the border
         painter.drawPolygon(trapezoid)
 
