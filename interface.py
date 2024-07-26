@@ -6,6 +6,7 @@ from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget, LaunchEntryWidget
 from rocket_launches import RocketLaunchesData
+from datetime import timedelta
 
 
 class CenterGridWidget(QWidget):
@@ -230,9 +231,18 @@ class LaunchWidget(QWidget):
         self.rocket_launch_obj.rocket_query_results()
         self.rocket_launch_obj.get_filtered_results()
 
+        self.api_timer = QTimer(self)
+        self.api_timer.timeout.connect(self.send_api_request)
+        self.api_timer.start(timedelta(minutes=4))                          # 1 LL2 API request every 4 minutes to use all 15 requests every hour
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_launches)
         self.timer.start(1000)
+
+    def send_api_request(self):
+        # Send new LL2 API request
+        self.rocket_launch_obj.rocket_query_results()
+        self.rocket_launch_obj.get_filtered_results()
 
     def update_launches(self):
         launches = self.rocket_launch_obj.updated_net()

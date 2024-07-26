@@ -1,11 +1,12 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect, QGridLayout
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
-from PySide6.QtCore import Qt, QRectF
+from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject
 import requests
+import sys
 
 
 class DragonImageWidget(QWidget):
@@ -173,22 +174,36 @@ class FooterButtonsWidget(QWidget):
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
 
 
+class ImageDownloader(QObject):
+    # Worker object to download image and emite signal when downlod is finished
+    image_downloaded = Signal(bytes, str)       # Signal to emit image data and URL
+
+    def __init__(self, url):
+        super().__init__()
+        self.url = url
+
+    @Slot()
+    def download_image(self):
+        try:
+            response = requests.get(self.url)
+            response.raise_for_status()
+            self.image_downloaded.emit(response.content, self.url)
+        except requests.RequestException as e:
+            print(f"Error downloading image: {e}")
+            self.image_downloaded.emit(b'', self.url)  # Emit empty byte data on failure
+
+
 class LaunchEntryWidget(QWidget):
     def __init__(self, launch_data):
         super().__init__()
 
         self.launch_data = launch_data
+        self.image_label = QLabel(self)
+        self.image_label.setFixedSize(200, 200)
+        self.image_label.setScaledContents(True)
 
         layout = QHBoxLayout()
-
-        # Display image
-        # image_label = QLabel(self)
-        # pixmap = QPixmap()
-        # pixmap.loadFromData(self.download_image(launch_data['image']))
-        # image_label.setPixmap(pixmap)
-        # image_label.setFixedSize(200, 200)
-        # image_label.setScaledContents(True)
-        # layout.addWidget(image_label)
+        layout.addWidget(self.image_label)
 
         self.info_layout = QVBoxLayout()
 
@@ -217,7 +232,13 @@ class LaunchEntryWidget(QWidget):
         self.time_data.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.time_data)
 
-        # Create a widget for the info_layout and add it to the layout
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)           # Required to apply style sheet on QWidget
+        self.setStyleSheet("""
+            QLabel {
+                color: #FFFFFF;
+            }
+        """)
+
         info_widget = QWidget()
         info_widget.setLayout(self.info_layout)
         layout.addWidget(info_widget)
@@ -229,11 +250,54 @@ class LaunchEntryWidget(QWidget):
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)
 
+        self.download_image(launch_data["image"])       # Start image download in seperate thread
+
     def update_countdown(self):
         countdown_dict = self.launch_data["countdown"]
-        countdown_text = f"T- {countdown_dict['days']:02d} : {countdown_dict['hours']:02d} : {countdown_dict['minutes']:02d} : {countdown_dict['seconds']:02d}"
+
+        # Workout if countdown is T+ or T-
+        countdown_delta = timedelta(days=countdown_dict['days'],
+                                hours=countdown_dict['hours'],
+                                minutes=countdown_dict['minutes'],
+                                seconds=countdown_dict['seconds'])
+
+        time_diff = datetime.now(timezone.utc) - countdown_delta
+        if datetime.now(timezone.utc) < time_diff:
+            sign = "T+"
+        else:
+            sign = "T-"
+
+        countdown_text = f"{sign} {countdown_dict['days']:02d} : {countdown_dict['hours']:02d} : {countdown_dict['minutes']:02d} : {countdown_dict['seconds']:02d}"
         self.countdown_label.setText(countdown_text)
 
     def download_image(self, url):
-        response = requests.get(url)
-        return response.content
+        self.thread = QThread()  # Instantiate QThread directly
+        self.worker = ImageDownloader(url)  # Create worker QObject
+        self.worker.moveToThread(self.thread)  # Move to separate thread
+
+        # Connect to signals and slots
+        self.worker.image_downloaded.connect(self.on_image_downloaded)
+        self.thread.started.connect(self.worker.download_image)  # Download image when thread starts
+        self.thread.finished.connect(self.cleanup_thread)
+
+        self.thread.start()
+
+    @Slot(bytes, str)
+    def on_image_downloaded(self, image_data, url):
+        if image_data:
+            pixmap = QPixmap()
+            pixmap.loadFromData(image_data)
+            self.image_label.setPixmap(pixmap)
+        self.thread.quit()  # Signal the thread to quit after the image is downloaded
+
+    @Slot()
+    def cleanup_thread(self):
+        self.worker.deleteLater()
+        self.thread.deleteLater()
+
+    def closeEvent(self, event):
+        if self.thread.isRunning():
+            self.thread.quit()
+            self.thread.wait()
+        super().closeEvent(event)
+
