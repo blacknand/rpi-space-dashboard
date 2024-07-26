@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
-from custom_widgets import DragonImageWidget, HeaderWidget, FooterButtonsWidget, LaunchEntryWidget
+from custom_widgets import *
 from rocket_launches import RocketLaunchesData
 from datetime import timedelta
 
@@ -226,23 +226,46 @@ class LaunchWidget(QWidget):
         # Config for rocket launches
         launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
         api_url_filters = "limit=10&include_suborbital=true&hide_recent_previous=true&ordering=net&mode=list&tbd=true"
-        api_url = f"{launch_api_url}?{api_url_filters}"
-        self.rocket_launch_obj = RocketLaunchesData(api_url)
+        self.api_url = f"{launch_api_url}?{api_url_filters}"
+        self.rocket_launch_obj = RocketLaunchesData(self.api_url)
         self.rocket_launch_obj.rocket_query_results()
         self.rocket_launch_obj.get_filtered_results()
 
         self.api_timer = QTimer(self)
         self.api_timer.timeout.connect(self.send_api_request)
-        self.api_timer.start(timedelta(minutes=4))                          # 1 LL2 API request every 4 minutes to use all 15 requests every hour
+        self.api_timer.start(timedelta(minutes=4).total_seconds() * 1000)                          # LL2 API request every 4 minutes to use all 15 requests every hour
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_launches)
         self.timer.start(1000)
 
+        self.send_api_request()
+
     def send_api_request(self):
-        # Send new LL2 API request
-        self.rocket_launch_obj.rocket_query_results()
+        self.thread = QThread()
+        self.worker = RocketLaunchAPIWorker(self.api_url)
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+        self.worker.result_signal.connect(self.handle_api_response)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.start()
+
+    # def send_api_request(self):
+    #     self.rocket_launch_obj.rocket_query_results()
+    #     self.rocket_launch_obj.get_filtered_results()
+
+    @Slot(object)
+    def handle_api_response(self, result):
+        # Check if LL2 API request send back error
+        if isinstance(result, str) and result.startswith("Error:"):
+            print(result)
+            return
+        
+        self.rocket_launch_obj.query_results = result
         self.rocket_launch_obj.get_filtered_results()
+        self.update_launches()
 
     def update_launches(self):
         launches = self.rocket_launch_obj.updated_net()

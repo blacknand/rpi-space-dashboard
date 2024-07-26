@@ -174,23 +174,21 @@ class FooterButtonsWidget(QWidget):
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
 
 
-class ImageDownloader(QObject):
-    # Worker object to download image and emite signal when downlod is finished
-    image_downloaded = Signal(bytes, str)       # Signal to emit image data and URL
+class RocketLaunchAPIWorker(QThread):
+    # Handles LL2 API request in seperate thread
+    result_signal = Signal(object)
 
     def __init__(self, url):
         super().__init__()
         self.url = url
 
-    @Slot()
-    def download_image(self):
+    def run(self):
         try:
             response = requests.get(self.url)
             response.raise_for_status()
-            self.image_downloaded.emit(response.content, self.url)
+            self.result_signal.emit(response.json())            # Emit API response 
         except requests.RequestException as e:
-            print(f"Error downloading image: {e}")
-            self.image_downloaded.emit(b'', self.url)  # Emit empty byte data on failure
+            self.result_signal.emit(f"Error: {e}\nError querying {self.url}")
 
 
 class LaunchEntryWidget(QWidget):
@@ -250,7 +248,6 @@ class LaunchEntryWidget(QWidget):
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)
 
-        self.download_image(launch_data["image"])       # Start image download in seperate thread
 
     def update_countdown(self):
         countdown_dict = self.launch_data["countdown"]
@@ -270,34 +267,5 @@ class LaunchEntryWidget(QWidget):
         countdown_text = f"{sign} {countdown_dict['days']:02d} : {countdown_dict['hours']:02d} : {countdown_dict['minutes']:02d} : {countdown_dict['seconds']:02d}"
         self.countdown_label.setText(countdown_text)
 
-    def download_image(self, url):
-        self.thread = QThread()  # Instantiate QThread directly
-        self.worker = ImageDownloader(url)  # Create worker QObject
-        self.worker.moveToThread(self.thread)  # Move to separate thread
 
-        # Connect to signals and slots
-        self.worker.image_downloaded.connect(self.on_image_downloaded)
-        self.thread.started.connect(self.worker.download_image)  # Download image when thread starts
-        self.thread.finished.connect(self.cleanup_thread)
-
-        self.thread.start()
-
-    @Slot(bytes, str)
-    def on_image_downloaded(self, image_data, url):
-        if image_data:
-            pixmap = QPixmap()
-            pixmap.loadFromData(image_data)
-            self.image_label.setPixmap(pixmap)
-        self.thread.quit()  # Signal the thread to quit after the image is downloaded
-
-    @Slot()
-    def cleanup_thread(self):
-        self.worker.deleteLater()
-        self.thread.deleteLater()
-
-    def closeEvent(self, event):
-        if self.thread.isRunning():
-            self.thread.quit()
-            self.thread.wait()
-        super().closeEvent(event)
 

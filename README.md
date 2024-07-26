@@ -6,7 +6,6 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 - NASA APOD: displays the Astronomoy Picture of the Day from NASA with current time
 - Mars data: displays Mars images and available data from various sources
 - SpaceX images: displays SpaceX images with current time
-- Multithreaded: all API requests including image downloaded are all handeled in seperate threads to keep the GUI running seamlessley
 ## Main display
 - TODO
 ## Upcoming rocket launches display
