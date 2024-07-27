@@ -7,7 +7,7 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 - Mars data: displays Mars images and available data from various sources
 - SpaceX images: displays SpaceX images with current time
 ## Main display
-- TODO
+![main-widget-display](https://github.com/user-attachments/assets/67a884e0-7145-4328-b275-2c31ed581cec)
 ## Upcoming rocket launches display
 - TODO
 ## NASA APOD display
