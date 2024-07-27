@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGrap
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect, QGridLayout
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
-from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject
+from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject, QThreadPool, QRunnable, Signal
 import requests
 import sys
 
@@ -174,27 +174,37 @@ class FooterButtonsWidget(QWidget):
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
 
 
-class RocketLaunchAPIWorker(QThread):
-    # Handles LL2 API request in seperate thread
-    result_signal = Signal(object)
+class WorkerSignals(QObject):
+    result = Signal(object)
+    error = Signal(str)
+    finished = Signal()
 
+    def __init__(self):
+        super().__init__()
+
+
+class RocketLaunchAPIWorker(QRunnable):
+    # Handles LL2 API request in seperate thread
     def __init__(self, url):
         super().__init__()
         self.url = url
+        self.signals = WorkerSignals()
 
+    @Slot()
     def run(self):
         try:
             response = requests.get(self.url)
             response.raise_for_status()
-            self.result_signal.emit(response.json())            # Emit API response 
+            self.signals.result.emit(response.json())  # Emit API response
         except requests.RequestException as e:
-            self.result_signal.emit(f"Error: {e}\nError querying {self.url}")
+            self.signals.error.emit(f"Error: {e}\nError querying {self.url}")
+        finally:
+            self.signals.finished.emit()
 
 
 class LaunchEntryWidget(QWidget):
     def __init__(self, launch_data):
         super().__init__()
-
         self.launch_data = launch_data
         self.image_label = QLabel(self)
         self.image_label.setFixedSize(200, 200)
@@ -204,33 +214,27 @@ class LaunchEntryWidget(QWidget):
         layout.addWidget(self.image_label)
 
         self.info_layout = QVBoxLayout()
-
         self.name = QLabel(launch_data["name"])
         self.name.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.name)
-
         self.lsp = QLabel(launch_data["lsp"])
         self.lsp.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.lsp)
-
         self.location = QLabel(f"{launch_data['location']} | {launch_data['pad']}")
         self.location.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.location)
-
         self.mission = QLabel(launch_data["mission_type"])
         self.mission.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.mission)
-
         self.countdown_label = QLabel()
         self.countdown_label.setFont(QFont('Arial', 14, QFont.Bold))
         self.info_layout.addWidget(self.countdown_label)
         self.update_countdown()
-
         self.time_data = QLabel(f"{launch_data['net']} | {launch_data['status']}")
         self.time_data.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.time_data)
 
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)           # Required to apply style sheet on QWidget
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QLabel {
                 color: #FFFFFF;
@@ -240,13 +244,28 @@ class LaunchEntryWidget(QWidget):
         info_widget = QWidget()
         info_widget.setLayout(self.info_layout)
         layout.addWidget(info_widget)
-
         self.setLayout(layout)
 
-        # Timer to update countdown every second
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_countdown)
         self.timer.start(1000)
+
+        self.threadpool = QThreadPool()
+        # self.start_image_download(launch_data["image"])
+
+    def start_image_download(self, image_url):
+        worker = ImageDownloadWorker(image_url)
+        worker.signals.result.connect(self.handle_image_download)
+        worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+
+    def handle_image_download(self, image_data):
+        pixmap = QPixmap()
+        pixmap.loadFromData(image_data)
+        self.image_label.setPixmap(pixmap)
+
+    def handle_error(self, error):
+        print(error)
 
 
     def update_countdown(self):

@@ -149,6 +149,8 @@ class MainWidget(QWidget):
         self.center_positioned = False
         self.display_main_widget()
 
+        self.threadpool = QThreadPool()
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
@@ -156,6 +158,11 @@ class MainWidget(QWidget):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.updateWidgetPositions()
+
+    def closeEvent(self, event):
+        # Make sure all threads are closed before app exits
+        self.threadpool.waitForDone()
+        event.accept()
 
     def updateWidgetPositions(self):
         # Fixed positions for 800x480 screen
@@ -239,22 +246,15 @@ class LaunchWidget(QWidget):
         self.timer.timeout.connect(self.update_launches)
         self.timer.start(1000)
 
+        self.threadpool = QThreadPool()
         self.send_api_request()
 
     def send_api_request(self):
-        self.thread = QThread()
-        self.worker = RocketLaunchAPIWorker(self.api_url)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.worker.result_signal.connect(self.handle_api_response)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.thread.start()
-
-    # def send_api_request(self):
-    #     self.rocket_launch_obj.rocket_query_results()
-    #     self.rocket_launch_obj.get_filtered_results()
+        worker = RocketLaunchAPIWorker(self.api_url)
+        worker.signals.result.connect(self.handle_api_response)
+        worker.signals.error.connect(self.handle_error)
+        # worker.signals.finished.connect(worker.deleteLater)
+        self.threadpool.start(worker)
 
     @Slot(object)
     def handle_api_response(self, result):
@@ -266,6 +266,10 @@ class LaunchWidget(QWidget):
         self.rocket_launch_obj.query_results = result
         self.rocket_launch_obj.get_filtered_results()
         self.update_launches()
+
+    @Slot(str)
+    def handle_error(self, error):
+        print(error)
 
     def update_launches(self):
         launches = self.rocket_launch_obj.updated_net()
