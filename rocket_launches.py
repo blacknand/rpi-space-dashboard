@@ -77,9 +77,10 @@ class RocketLaunchesData:
                 launch_time += timedelta(minutes=15)
                 time_difference = launch_time - current_time
             if current_time - launch_time <= timedelta(minutes=15):
-                countdown = self.format_countdown(time_difference)
+                countdown = self.format_countdown(time_difference) 
                 updated_results.append({
                     **result,
+                    "status": result["status"],
                     "net": launch_time.strftime("%d %B"),
                     "countdown": countdown
                 })
