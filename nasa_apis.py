@@ -4,6 +4,7 @@ import json
 import os
 import importlib.util
 import sys
+from datetime import datetime, timedelta
 from custom_widgets import ImageDownloadWorker, WorkerSignals
 from PySide6.QtCore import Slot, QThreadPool, QRunnable
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
@@ -28,14 +29,18 @@ spec.loader.exec_module(apod_object_parser)
 
 
 class APODWorker(QRunnable):
-    def __init__(self):
+    def __init__(self, date=None):
         super().__init__()
         self.signals = WorkerSignals()
+        self.date = date
 
     @Slot()
     def run(self):
         try:
-            raw_response = requests.get(f'https://api.nasa.gov/planetary/apod?api_key={os.environ.get("nasa_key")}').text
+            url = f'https://api.nasa.gov/planetary/apod?api_key={os.environ.get("nasa_key")}'
+            if self.date:
+                url += f"&date={self.date}"
+            raw_response = requests.get(url).text
             response = json.loads(raw_response)
             self.signals.result.emit(response)
         except requests.RequestException as e:
@@ -52,6 +57,7 @@ class ApodWidget(QWidget):
         self.apod_url = None
         self.media_type = None
         self.apod_download = False
+        self.current_date = datetime.today()
 
         self.apod_label = QLabel(self)
         self.apod_label.setScaledContents(True)
@@ -71,8 +77,12 @@ class ApodWidget(QWidget):
         self.threadpool = QThreadPool()
         self.send_apod_request()
 
-    def send_apod_request(self):
-        worker = APODWorker()
+    def send_apod_request(self, date=None):
+        if date:
+            date_str = date.strftime('%Y-%m-%d')
+        else:
+            date_str = None
+        worker = APODWorker(date_str)
         worker.signals.result.connect(self.handle_apod_response)
         worker.signals.error.connect(self.handle_error)
         self.threadpool.start(worker)
@@ -83,30 +93,39 @@ class ApodWidget(QWidget):
             print(response)
             return
         
+        print(response)
         self.apod_title = apod_object_parser.get_title(response)
         self.apod_explaination = apod_object_parser.get_explaination(response)
         self.apod_url = apod_object_parser.get_url(response)
         self.media_type = apod_object_parser.get_media_type(response)
+
+        """
+        if the media type is a video then display the previous APOD
+        """
         if self.media_type == "image":
-            self.start_apod_download(self, self.apod_url)
+            self.start_apod_download(self.apod_url)
         else:
-            self.apod_label.setText("no image")
+            self.fetch_previous_image_apod()
+
+    def fetch_previous_image_apod(self):
+        self.current_date -= timedelta(days=1)
+        self.send_apod_request(self.current_date)
 
     @Slot(str)
-    def handle_error(error):
+    def handle_error(self, error):
         print(error)
 
     def start_apod_download(self, apod_url):
-        if not self.image_downloaded:
+        if not self.apod_download:
             worker = ImageDownloadWorker(apod_url)
             worker.signals.result.connect(self.handle_apod_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
 
     @Slot(object)
-    def handle_apod_download(self, apod_url):
+    def handle_apod_download(self, raw_data):
         pixmap = QPixmap()
-        pixmap.loadFromData(apod_url)
+        pixmap.loadFromData(raw_data)
         self.apod_label.setPixmap(pixmap)
         self.apod_download = True
 
