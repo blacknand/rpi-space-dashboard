@@ -7,6 +7,7 @@ from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import *
 from rocket_launches import RocketLaunchesData
+from nasa_apis import *
 from datetime import timedelta
 
 
@@ -311,16 +312,6 @@ class LaunchWidget(QWidget):
 
 # TODO: Randomly selected SpaceX image
 class SpaceXWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
-        layout = QVBoxLayout()
-        layout.addWidget(self.text)
-        self.setLayout(layout)
-
-
-# TODO: APOD image
-class ApodWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
