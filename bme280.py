@@ -139,7 +139,7 @@ class HumidityWidget(BMEDataWidget):
             min_value=0,
             max_value=100,
             color=QColor(255, 0, 0),
-            start_angle=115,
+            start_angle=100,
             parent=parent
         )
 
