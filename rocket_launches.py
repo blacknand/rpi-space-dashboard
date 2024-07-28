@@ -8,6 +8,7 @@ class RocketLaunchesData:
         self.query_results = None                                  
         self.filtered_results = None
         self.filtered_test_results = None
+        self.initial_data = {}
 
     def rocket_query_results(self) -> dict or None:
         try:
@@ -30,9 +31,21 @@ class RocketLaunchesData:
         except Exception as e:
             print(f"RocketLaunchesData::json_file_dump: Exception has occured: {e}")
 
-    def get_filtered_results(self) -> json:
-        self.filtered_results = [(result["name"], result["lsp_name"], result["status"]["abbrev"], result["image"], 
-                                  result["net"], result["mission"], result["mission_type"], result["pad"], result["location"]) for result in self.query_results["results"]]
+    def get_filtered_results(self) -> list:
+        self.filtered_results = [
+            {
+                "name": result["name"],
+                "lsp_name": result["lsp_name"],
+                "status": result["status"]["abbrev"],
+                "image": result["image"],
+                "net": result["net"],
+                "mission": result["mission"],
+                "mission_type": result["mission_type"],
+                "pad": result["pad"],
+                "location": result["location"]
+            }
+            for result in self.query_results["results"]
+        ]
         return self.filtered_results
 
     def json_test_filter(self, json_file: str) -> json:
@@ -57,27 +70,20 @@ class RocketLaunchesData:
         # Remove launches past T+ 15 minutes
         current_time = datetime.now(timezone.utc)
         updated_results = []
-        for i in self.filtered_results:
-            launch_time = datetime.strptime(i[4], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        for result in self.filtered_results:
+            launch_time = datetime.strptime(result["net"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
             time_difference = launch_time - current_time
-            dt = datetime.strptime(i[4], "%Y-%m-%dT%H:%M:%SZ")
             if time_difference.total_seconds() < 0:
                 launch_time += timedelta(minutes=15)
                 time_difference = launch_time - current_time
-
             if current_time - launch_time <= timedelta(minutes=15):
+                countdown = self.format_countdown(time_difference)
                 updated_results.append({
-                    "name": i[0],
-                    "lsp": i[1],
-                    "status": i[2],
-                    "image": i[3],
-                    "net": dt.strftime("%d %B"),
-                    "countdown": self.format_countdown(time_difference),
-                    "mission_type": i[6],
-                    "pad": i[7],
-                    "location": i[8]
+                    **result,
+                    "net": launch_time.strftime("%d %B"),
+                    "countdown": countdown
                 })
-
+                
         return updated_results
 
     def format_countdown(self, time_difference):
@@ -92,9 +98,3 @@ class RocketLaunchesData:
             "minutes": minutes,
             "seconds": seconds
         }
-    
-    def current_time(self):
-        today = date.today()
-        formatted_cur_date = f'{today.strftime("%a")}, {today.strftime("%b")} {today.strftime("%d")}'
-        current_time = datetime.now().strftime("%H:%M:%S")
-        return [formatted_cur_date, current_time]

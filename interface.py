@@ -276,16 +276,21 @@ class LaunchWidget(QWidget):
         self.display_launches(launches)
 
     def display_launches(self, launches):
-        # Clear the current layout
+        existing_widgets = {self.scroll_layout.itemAt(i).widget().launch_data['name']: self.scroll_layout.itemAt(i).widget()
+                            for i in range(self.scroll_layout.count())}
+        
+        for launch_data in launches:
+            if launch_data['name'] in existing_widgets:
+                existing_widgets[launch_data['name']].update_data(launch_data)
+            else:
+                launch_entry = LaunchEntryWidget(launch_data)
+                self.scroll_layout.addWidget(launch_entry)
+        
         for i in reversed(range(self.scroll_layout.count())):
             widget = self.scroll_layout.itemAt(i).widget()
-            if widget is not None:
+            if widget.launch_data['name'] not in [ld['name'] for ld in launches]:
                 widget.deleteLater()
 
-        # Add new launch entries
-        for launch_data in launches:
-            launch_entry = LaunchEntryWidget(launch_data)
-            self.scroll_layout.addWidget(launch_entry)
 
 
 # TODO: Randomly selected SpaceX image

@@ -202,10 +202,31 @@ class RocketLaunchAPIWorker(QRunnable):
             self.signals.finished.emit()
 
 
+class ImageDownloadWorker(QRunnable):
+    def __init__(self, url):
+        super().__init__()
+        self.url = url
+        self.signals = WorkerSignals()
+
+    @Slot()
+    def run(self):
+        try:
+            response = requests.get(self.url)
+            response.raise_for_status()
+            image_data = response.content
+            self.signals.result.emit(image_data)
+        except requests.RequestException as e:
+            self.signals.error.emit(f"Error: {e}\nError downloading {self.url}")
+        finally:
+            self.signals.finished.emit()
+
+
 class LaunchEntryWidget(QWidget):
     def __init__(self, launch_data):
         super().__init__()
         self.launch_data = launch_data
+        self.image_downloaded = False
+
         self.image_label = QLabel(self)
         self.image_label.setFixedSize(200, 200)
         self.image_label.setScaledContents(True)
@@ -217,7 +238,7 @@ class LaunchEntryWidget(QWidget):
         self.name = QLabel(launch_data["name"])
         self.name.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.name)
-        self.lsp = QLabel(launch_data["lsp"])
+        self.lsp = QLabel(launch_data["lsp_name"])
         self.lsp.setFont(QFont("Arial", 14, QFont.Bold))
         self.info_layout.addWidget(self.lsp)
         self.location = QLabel(f"{launch_data['location']} | {launch_data['pad']}")
@@ -251,38 +272,43 @@ class LaunchEntryWidget(QWidget):
         self.timer.start(1000)
 
         self.threadpool = QThreadPool()
-        # self.start_image_download(launch_data["image"])
+        self.start_image_download(launch_data["image"])
 
     def start_image_download(self, image_url):
-        worker = ImageDownloadWorker(image_url)
-        worker.signals.result.connect(self.handle_image_download)
-        worker.signals.error.connect(self.handle_error)
-        self.threadpool.start(worker)
+        if not self.image_downloaded:
+            worker = ImageDownloadWorker(image_url)
+            worker.signals.result.connect(self.handle_image_download)
+            worker.signals.error.connect(self.handle_error)
+            self.threadpool.start(worker)
 
+    @Slot(object)
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
         pixmap.loadFromData(image_data)
         self.image_label.setPixmap(pixmap)
+        self.image_downloaded = True
 
+    @Slot(str)
     def handle_error(self, error):
         print(error)
 
+    def update_data(self, launch_data):
+        self.launch_data.update(launch_data)
+        self.name.setText(launch_data["name"])
+        self.lsp.setText(launch_data["lsp_name"])
+        self.location.setText(f"{launch_data['location']} | {launch_data['pad']}")
+        self.mission.setText(launch_data["mission_type"])
+        self.time_data.setText(f"{launch_data['net']} | {launch_data['status']}")
+        self.update_countdown()
 
     def update_countdown(self):
         countdown_dict = self.launch_data["countdown"]
-
-        # Workout if countdown is T+ or T-
         countdown_delta = timedelta(days=countdown_dict['days'],
-                                hours=countdown_dict['hours'],
-                                minutes=countdown_dict['minutes'],
-                                seconds=countdown_dict['seconds'])
-
+                                    hours=countdown_dict['hours'],
+                                    minutes=countdown_dict['minutes'],
+                                    seconds=countdown_dict['seconds'])
         time_diff = datetime.now(timezone.utc) - countdown_delta
-        if datetime.now(timezone.utc) < time_diff:
-            sign = "T+"
-        else:
-            sign = "T-"
-
+        sign = "T+" if datetime.now(timezone.utc) < time_diff else "T-"
         countdown_text = f"{sign} {countdown_dict['days']:02d} : {countdown_dict['hours']:02d} : {countdown_dict['minutes']:02d} : {countdown_dict['seconds']:02d}"
         self.countdown_label.setText(countdown_text)
 
