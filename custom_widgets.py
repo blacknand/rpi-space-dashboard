@@ -228,42 +228,57 @@ class LaunchEntryWidget(QWidget):
         self.image_downloaded = False
 
         self.image_label = QLabel(self)
-        self.image_label.setFixedSize(200, 200)
+        self.image_label.setFixedSize(170, 170)
         self.image_label.setScaledContents(True)
 
         layout = QHBoxLayout()
+        layout.addSpacing(7.5)
         layout.addWidget(self.image_label)
+        layout.setSpacing(0)  
+        layout.setContentsMargins(0, 0, 0, 0)  
 
         self.info_layout = QVBoxLayout()
         self.name = QLabel(launch_data["name"])
         self.name.setFont(QFont("Arial", 14, QFont.Bold))
+        self.name.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.name)
         self.lsp = QLabel(launch_data["lsp_name"])
         self.lsp.setFont(QFont("Arial", 14, QFont.Bold))
+        self.lsp.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.lsp)
         self.location = QLabel(f"{launch_data['location']} | {launch_data['pad']}")
         self.location.setFont(QFont("Arial", 14, QFont.Bold))
+        self.location.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.location)
         self.mission = QLabel(launch_data["mission_type"])
         self.mission.setFont(QFont("Arial", 14, QFont.Bold))
+        self.mission.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.mission)
         self.countdown_label = QLabel()
         self.countdown_label.setFont(QFont('Arial', 14, QFont.Bold))
+        self.countdown_label.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.countdown_label)
         self.update_countdown()
         self.time_data = QLabel(f"{launch_data['net']} | {launch_data['status']}")
         self.time_data.setFont(QFont("Arial", 14, QFont.Bold))
+        self.time_data.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.time_data)
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
-            QLabel {
-                color: #FFFFFF;
+            QWidget {
+                background-color: #2E2D4D;
+                border-radius: 5%;  
             }
+            QLabel {
+                color: white;
+            }
+
         """)
 
         info_widget = QWidget()
         info_widget.setLayout(self.info_layout)
+
         layout.addWidget(info_widget)
         self.setLayout(layout)
 

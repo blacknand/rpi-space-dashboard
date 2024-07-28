@@ -1,7 +1,8 @@
 import sys
 import signal
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea
+import traceback
+from PySide6.QtCore import Qt, QTimer, QEvent, Slot, QObject, QThreadPool, Signal, QRunnable
+from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea, QScroller
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import *
@@ -214,7 +215,6 @@ class MainWidget(QWidget):
 
 
 
-# TODO: List of launches
 class LaunchWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -224,11 +224,23 @@ class LaunchWidget(QWidget):
 
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  
+        QScroller.grabGesture(self.scroll_area.viewport(), QScroller.LeftMouseButtonGesture)            # Enable kinetic scrolling
+
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_area.setWidget(self.scroll_content)
 
         self.layout.addWidget(self.scroll_area)
+
+        self.setFixedHeight(425)
+
+        self.setStyleSheet("""
+            QWidget {
+                border: none;
+            }
+        """)
 
         # Config for rocket launches
         launch_api_url = "https://lldev.thespacedevs.com/2.2.0/launch/upcoming/"
@@ -253,7 +265,6 @@ class LaunchWidget(QWidget):
         worker = RocketLaunchAPIWorker(self.api_url)
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
-        # worker.signals.finished.connect(worker.deleteLater)
         self.threadpool.start(worker)
 
     @Slot(object)
@@ -290,6 +301,11 @@ class LaunchWidget(QWidget):
             widget = self.scroll_layout.itemAt(i).widget()
             if widget.launch_data['name'] not in [ld['name'] for ld in launches]:
                 widget.deleteLater()
+
+    def event(self, event):
+        if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchUpdate or event.type() == QEvent.TouchEnd:
+            return self.scroll_area.event(event)
+        return super().event(event)
 
 
 
