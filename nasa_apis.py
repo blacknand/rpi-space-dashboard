@@ -30,24 +30,37 @@ spec.loader.exec_module(apod_object_parser)
 class PopUpWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Pop-Up")
-        self.setFixedSize(300, 200)  # Set a fixed size for the pop-up widget
+        self.setWindowTitle("APOD")
+        self.setFixedSize(400, 300) 
 
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.setSpacing(5)
 
-        self.label = QLabel("No Data", self)
-        self.label.setWordWrap(True)  # Enable word wrapping
-        self.layout.addWidget(self.label)
+        self.title = QLabel("No Data", self)
+        self.explanation = QLabel("No Data", self)
+
+        self.explanation.setWordWrap(True)  
+        self.title.setAlignment(Qt.AlignCenter)
+        self.explanation.setAlignment(Qt.AlignCenter)
+
+        self.layout.addSpacing(10)
+        self.layout.addWidget(self.title, alignment=Qt.AlignCenter)
+        self.layout.addSpacing(10)
+        self.layout.addWidget(self.explanation, alignment=Qt.AlignCenter)
+
+        self.layout.addStretch(1)
 
         self.close_button = QPushButton("Close", self)
         self.close_button.clicked.connect(self.close)
-        self.layout.addWidget(self.close_button)
+        self.layout.addWidget(self.close_button, alignment=Qt.AlignCenter)
 
         self.setLayout(self.layout)
 
-    def update_content(self, title, explanation):
-        self.label.setText(f"Title: {title}\n\nExplanation: {explanation}")
-
+    def update_content(self, title, explanation, apod_date):
+        self.title.setText(title)
+        self.explanation.setText(explanation)
+        self.setWindowTitle(f"APOD - {apod_date}")
 
 
 class APODWorker(QRunnable):
@@ -209,5 +222,5 @@ class ApodWidget(QWidget):
 
     def show_popup(self):
         if self.apod_title and self.apod_explaination:
-            self.popup_widget.update_content(self.apod_title, self.apod_explaination)
+            self.popup_widget.update_content(self.apod_title, self.apod_explaination, self.apod_date)
         self.popup_widget.show()
