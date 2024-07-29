@@ -303,7 +303,15 @@ class LaunchEntryWidget(QWidget):
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
         pixmap.loadFromData(image_data)
-        self.image_label.setPixmap(pixmap)
+        
+        target_size = self.image_label.size()
+        scaled_pixmap = pixmap.scaled(target_size, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        
+        x_offset = (scaled_pixmap.width() - target_size.width()) // 2
+        y_offset = (scaled_pixmap.height() - target_size.height()) // 2
+        cropped_pixmap = scaled_pixmap.copy(x_offset, y_offset, target_size.width(), target_size.height())
+        
+        self.image_label.setPixmap(cropped_pixmap)
         self.image_downloaded = True
 
     @Slot(str)
