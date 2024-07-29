@@ -27,6 +27,28 @@ spec = importlib.util.spec_from_file_location(module_name, file_path)
 apod_object_parser = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(apod_object_parser)
 
+class PopUpWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Pop-Up")
+        self.setFixedSize(300, 200)  # Set a fixed size for the pop-up widget
+
+        self.layout = QVBoxLayout()
+
+        self.label = QLabel("No Data", self)
+        self.label.setWordWrap(True)  # Enable word wrapping
+        self.layout.addWidget(self.label)
+
+        self.close_button = QPushButton("Close", self)
+        self.close_button.clicked.connect(self.close)
+        self.layout.addWidget(self.close_button)
+
+        self.setLayout(self.layout)
+
+    def update_content(self, title, explanation):
+        self.label.setText(f"Title: {title}\n\nExplanation: {explanation}")
+
+
 
 class APODWorker(QRunnable):
     def __init__(self, date=None):
@@ -58,6 +80,7 @@ class ApodWidget(QWidget):
         self.media_type = None
         self.apod_download = False
         self.current_date = datetime.today()
+        self.apod_date = None
 
         self.apod_label = QLabel(self)
         self.apod_label.setScaledContents(False)
@@ -81,6 +104,7 @@ class ApodWidget(QWidget):
                 background-color: #1abc9c;
             }
         """)
+        self.download_button.clicked.connect(self.show_popup)
 
         stacked_layout = QStackedLayout()
         stacked_layout.addWidget(self.apod_label)
@@ -102,6 +126,8 @@ class ApodWidget(QWidget):
         self.start_timer()
 
         self.send_apod_request()
+
+        self.popup_widget = PopUpWidget()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -152,6 +178,7 @@ class ApodWidget(QWidget):
         self.apod_explaination = apod_object_parser.get_explaination(response)
         self.apod_url = apod_object_parser.get_url(response)
         self.media_type = apod_object_parser.get_media_type(response)
+        self.apod_date = apod_object_parser.get_date(response)
 
         if self.media_type == "image":
             self.start_apod_download(self.apod_url)
@@ -180,4 +207,7 @@ class ApodWidget(QWidget):
         self.apod_label.setPixmap(pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.apod_download = True
 
-    
+    def show_popup(self):
+        if self.apod_title and self.apod_explaination:
+            self.popup_widget.update_content(self.apod_title, self.apod_explaination)
+        self.popup_widget.show()
