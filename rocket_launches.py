@@ -10,16 +10,17 @@ class RocketLaunchesData:
         self.filtered_test_results = None
         self.initial_data = {}
 
-    def rocket_query_results(self) -> dict or None:
+    def rocket_query_results(self, url=None) -> dict or None:
         try:
-            query_results = requests.get(self.query_url)
+            if url is None:
+                url = self.query_url
+            query_results = requests.get(url)
             query_results.raise_for_status()
         except Exception as e:
-            print(f"RocketLaunchesData::rocket_query_results: Exception has occured: {e}")
+            print(f"RocketLaunchesData::rocket_query_results: Exception has occurred: {e}")
             return None
         else:
-            self.query_results = query_results.json()
-            return self.query_results
+            return query_results.json()
         
     def json_file_dump(self, file: str) -> None:
         self.query_results = self.rocket_query_results()
@@ -31,7 +32,24 @@ class RocketLaunchesData:
         except Exception as e:
             print(f"RocketLaunchesData::json_file_dump: Exception has occured: {e}")
 
+    def get_all_results(self):
+        all_results = []
+        next_url = self.query_url
+        while next_url:
+            next_results = self.rocket_query_results(next_url)
+            if not next_results:
+                quit()
+        
+            all_results.extend(next_results["results"])
+            next_url = next_results.get("next")
+        
+        self.query_results = {"results": all_results}
+        return self.query_results
+
     def get_filtered_results(self) -> list:
+        if self.query_results is None:
+            self.query_results = self.get_all_results()
+        
         self.filtered_results = [
             {
                 "name": result["name"],
@@ -84,7 +102,7 @@ class RocketLaunchesData:
                     "net": launch_time.strftime("%d %B"),
                     "countdown": countdown
                 })
-                
+
         return updated_results
 
     def format_countdown(self, time_difference):

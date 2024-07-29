@@ -27,7 +27,7 @@ spec = importlib.util.spec_from_file_location(module_name, file_path)
 apod_object_parser = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(apod_object_parser)
 
-class PopUpWidget(QWidget):
+class APODPopUpWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("APOD")
@@ -117,7 +117,7 @@ class ApodWidget(QWidget):
                 background-color: #1abc9c;
             }
         """)
-        self.download_button.clicked.connect(self.show_popup)
+        self.download_button.clicked.connect(self.show_apod_popup)
 
         stacked_layout = QStackedLayout()
         stacked_layout.addWidget(self.apod_label)
@@ -140,7 +140,7 @@ class ApodWidget(QWidget):
 
         self.send_apod_request()
 
-        self.popup_widget = PopUpWidget()
+        self.apod_popup_widget = APODPopUpWidget()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -220,7 +220,47 @@ class ApodWidget(QWidget):
         self.apod_label.setPixmap(pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.apod_download = True
 
-    def show_popup(self):
+    def show_apod_popup(self):
         if self.apod_title and self.apod_explaination:
-            self.popup_widget.update_content(self.apod_title, self.apod_explaination, self.apod_date)
-        self.popup_widget.show()
+            self.apod_popup_widget.update_content(self.apod_title, self.apod_explaination, self.apod_date)
+        self.apod_popup_widget.show()
+
+
+class MarsImagesWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+
+    def curiosity_rover_query():
+        mars_url = r'https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/latest_photos?api_key=' + os.environ.get("nasa_key")
+        mars_data = requests.get(mars_url)
+        mars_jso = json.loads(mars_data.text)
+        # name = mars_jso["latest_photos"][0]["camera"]["full_name"]
+        # earth_date = mars_jso["latest_photos"][0]["earth_date"]
+        # mars_img_url = mars_jso["latest_photos"][0]["img_src"]
+        # sol_date = mars_jso["latest_photos"][0]["sol"]
+        # rover = mars_jso["latest_photos"][0]["rover"]["name"]
+        # mars_img = requests.get(mars_img_url).content
+        # with open('mars_img.jpg', 'wb') as handler:
+        #     handler.write(mars_img)
+
+        # return [name, earth_date, sol_date, rover]
+        print(mars_jso)
+
+    def opportunity_rover_query():
+        mars_url = r'https://api.nasa.gov/mars-photos/api/v1/rovers/opportunity/latest_photos?api_key=' + os.environ.get("nasa_key")
+        mars_data = requests.get(mars_url)
+        mars_jso = json.loads(mars_data.text)
+        print(mars_jso)
+
+    def spirit_rover_query():
+        mars_url = r'https://api.nasa.gov/mars-photos/api/v1/rovers/spirity/latest_photos?api_key=' + os.environ.get("nasa_key")
+        mars_data = requests.get(mars_url)
+        mars_jso = json.loads(mars_data.text)
+        print(mars_jso)
+
+test = MarsImagesWidget()
+test.curiosity_rover_query()
+print()
+test.opportunity_rover_query()
+print()
+test.spirit_rover_query()
