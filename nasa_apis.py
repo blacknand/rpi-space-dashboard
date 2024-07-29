@@ -6,7 +6,7 @@ import importlib.util
 import sys
 from datetime import datetime, timedelta
 from custom_widgets import ImageDownloadWorker, WorkerSignals
-from PySide6.QtCore import Slot, QThreadPool, QRunnable
+from PySide6.QtCore import Slot, QThreadPool, QRunnable, QTimer, QTime
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
 from PySide6.QtGui import QPixmap
 
@@ -75,7 +75,29 @@ class ApodWidget(QWidget):
         self.setLayout(main_layout)
 
         self.threadpool = QThreadPool()
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.send_apod_request)
+        self.start_timer()
+
         self.send_apod_request()
+
+    def start_timer(self):
+        current_time = QTime.currentTime()
+        midnight_et = QTime(0, 0)
+        if current_time < midnight_et:
+            secs_till_midnight = current_time.secsTo(midnight_et)
+        else:
+            secs_till_midnight = current_time.secsTo(midnight_et) + 86400
+
+        self.timer.setInterval(secs_till_midnight * 1000)
+        self.timer.start()
+
+        QTimer.singleShot(secs_till_midnight * 1000, self.set_daily_timer)
+
+    def set_daily_timer(self):
+        self.timer.setInterval(86400000)        # 24 hours in milliseconds
+        self.timer.start()
 
     def send_apod_request(self, date=None):
         if date:
@@ -93,15 +115,11 @@ class ApodWidget(QWidget):
             print(response)
             return
         
-        print(response)
         self.apod_title = apod_object_parser.get_title(response)
         self.apod_explaination = apod_object_parser.get_explaination(response)
         self.apod_url = apod_object_parser.get_url(response)
         self.media_type = apod_object_parser.get_media_type(response)
 
-        """
-        if the media type is a video then display the previous APOD
-        """
         if self.media_type == "image":
             self.start_apod_download(self.apod_url)
         else:
