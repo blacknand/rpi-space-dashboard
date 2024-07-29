@@ -228,7 +228,7 @@ class LaunchEntryWidget(QWidget):
         self.image_downloaded = False
 
         self.image_label = QLabel(self)
-        self.image_label.setFixedSize(170, 170)
+        self.image_label.setFixedSize(190, 190)
         self.image_label.setScaledContents(True)
 
         layout = QHBoxLayout()
@@ -236,7 +236,6 @@ class LaunchEntryWidget(QWidget):
         layout.addWidget(self.image_label)
         layout.setSpacing(0)  
         layout.setContentsMargins(0, 0, 0, 0)  
-
         self.info_layout = QVBoxLayout()
         self.name = QLabel(launch_data["name"])
         self.name.setFont(QFont("Arial", 14, QFont.Bold))
@@ -246,10 +245,14 @@ class LaunchEntryWidget(QWidget):
         self.lsp.setFont(QFont("Arial", 14, QFont.Bold))
         self.lsp.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.lsp)
-        self.location = QLabel(f"{launch_data['location']} | {launch_data['pad']}")
+        self.location = QLabel(launch_data['location'])
         self.location.setFont(QFont("Arial", 14, QFont.Bold))
         self.location.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.location)
+        self.pad = QLabel(launch_data['pad'])
+        self.pad.setFont(QFont("Arial", 14, QFont.Bold))
+        self.pad.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.info_layout.addWidget(self.pad)
         self.mission = QLabel(launch_data["mission_type"])
         self.mission.setFont(QFont("Arial", 14, QFont.Bold))
         self.mission.setAlignment(Qt.AlignmentFlag.AlignCenter) 
@@ -311,7 +314,8 @@ class LaunchEntryWidget(QWidget):
         self.launch_data.update(launch_data)
         self.name.setText(launch_data["name"])
         self.lsp.setText(launch_data["lsp_name"])
-        self.location.setText(f"{launch_data['location']} | {launch_data['pad']}")
+        self.location.setText(launch_data['location'])
+        self.pad.setText(launch_data["pad"])
         self.mission.setText(launch_data["mission_type"])
         self.time_data.setText(f"{launch_data['net']} | {launch_data['status']}")
         self.update_countdown()

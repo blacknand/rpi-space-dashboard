@@ -6,8 +6,8 @@ import importlib.util
 import sys
 from datetime import datetime, timedelta
 from custom_widgets import ImageDownloadWorker, WorkerSignals
-from PySide6.QtCore import Slot, QThreadPool, QRunnable, QTimer, QTime
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton
+from PySide6.QtCore import Slot, QThreadPool, QRunnable, QTimer, QTime, Qt
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QStackedLayout, QSizePolicy
 from PySide6.QtGui import QPixmap
 
 load_dotenv("keys.env")
@@ -60,19 +60,40 @@ class ApodWidget(QWidget):
         self.current_date = datetime.today()
 
         self.apod_label = QLabel(self)
-        self.apod_label.setScaledContents(True)
+        self.apod_label.setScaledContents(False)
+        self.apod_label.setAlignment(Qt.AlignCenter)
+        self.apod_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
         self.download_button = QPushButton("!", self)
-        self.download_button.setMaximumSize(100, 30)
+        self.download_button.setFixedSize(30, 30)
+        self.download_button.setStyleSheet("""
+            QPushButton {
+                border-radius: 15px;
+                background-color: #3498db;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #2980b9;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #1abc9c;
+            }
+        """)
+
+        stacked_layout = QStackedLayout()
+        stacked_layout.addWidget(self.apod_label)
 
         main_layout = QVBoxLayout()
-        image_layout = QHBoxLayout()
-        button_layout = QHBoxLayout()
-        image_layout.addWidget(self.apod_label)
-        button_layout.addStretch()
-        button_layout.addWidget(self.download_button)
-        main_layout.addLayout(button_layout)
-        main_layout.addLayout(image_layout)
+        main_layout.addLayout(stacked_layout)
+        main_layout.setContentsMargins(0, 0, 0, 0)  
+        main_layout.setSpacing(0) 
         self.setLayout(main_layout)
+
+        self.download_button.setParent(self)
+        self.download_button.raise_()
+        self.download_button.move(self.width() - self.download_button.width() - 10, 10)  # Adjust the position as needed    
 
         self.threadpool = QThreadPool()
 
@@ -81,6 +102,18 @@ class ApodWidget(QWidget):
         self.start_timer()
 
         self.send_apod_request()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.download_button.move(self.width() - self.download_button.width() - 10, 10)
+        self.scale_pixmap()
+
+    def scale_pixmap(self):
+        if not self.apod_download:
+            return
+        pixmap = self.apod_label.pixmap()
+        if pixmap:
+            self.apod_label.setPixmap(pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def start_timer(self):
         current_time = QTime.currentTime()
@@ -144,7 +177,7 @@ class ApodWidget(QWidget):
     def handle_apod_download(self, raw_data):
         pixmap = QPixmap()
         pixmap.loadFromData(raw_data)
-        self.apod_label.setPixmap(pixmap)
+        self.apod_label.setPixmap(pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.apod_download = True
 
     
