@@ -2,6 +2,7 @@ import requests
 import json
 from datetime import datetime, timedelta, timezone, date
 import sys
+from requests.exceptions import HTTPError, Timeout
 
 class RocketLaunchesData:
     def __init__(self, query_url: str):
@@ -11,17 +12,25 @@ class RocketLaunchesData:
         self.filtered_test_results = None
         self.initial_data = {}
 
-    def rocket_query_results(self, url=None) -> dict or None:
+    def rocket_query_results(self, url=None, retries=3) -> dict or None:
+        if url is None:
+            url = self.query_url
+        
         try:
-            if url is None:
-                url = self.query_url
-            query_results = requests.get(url)
-            query_results.raise_for_status()
-        except Exception as e:
-            print(f"RocketLaunchesData::rocket_query_results: Exception has occurred: {e}")
-            return None
-        else:
-            return query_results.json()
+            response = requests.get(url, timeout=30)  
+            response.raise_for_status()
+            return response.json()
+        except HTTPError as http_err:
+            if response.status_code == 524 and retries > 0:
+                print(f"524 Server Error: Retrying ({retries} retries left)...")
+                return self.rocket_query_results(url, retries - 1)
+            else:
+                print(f"HTTP error occurred: {http_err}")
+        except Timeout:
+            print("The request timed out")
+        except Exception as err:
+            print(f"Other error occurred: {err}")
+        return None
         
     def json_file_dump(self, file: str) -> None:
         self.query_results = self.rocket_query_results()
