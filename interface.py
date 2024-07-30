@@ -8,7 +8,9 @@ from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, b
 from custom_widgets import *
 from rocket_launches import RocketLaunchesData
 from nasa_apis import *
+from space_news import *
 from datetime import timedelta
+
 
 
 class CenterGridWidget(QWidget):
@@ -97,7 +99,9 @@ class BottomWidget(QWidget):
 class MainWidget(QWidget):
     def __init__(self):
         super().__init__()     
- 
+
+        # Config
+
         self.stacked_widget = QStackedWidget(self)
 
         self.header_widget = HeaderWidget()
@@ -108,14 +112,14 @@ class MainWidget(QWidget):
         self.launch_view = LaunchWidget()
         self.apod_view = ApodWidget()
         self.mars_view = MarsWidget()
-        self.spacex_view = SpaceXWidget()
+        # self.space_news_view = SpaceNewsWidget()
 
         # Add widgets to QStackedWidget
         self.stacked_widget.addWidget(self.center_grid_widget)
         self.stacked_widget.addWidget(self.launch_view)
         self.stacked_widget.addWidget(self.apod_view)
         self.stacked_widget.addWidget(self.mars_view)
-        self.stacked_widget.addWidget(self.spacex_view)
+        # self.stacked_widget.addWidget(self.space_news_view)
 
         self.setStyleSheet("""
             background-color: #050A30;
@@ -142,7 +146,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
         self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
         self.bottom_widget.buttons_widget.rover_button.clicked.connect(self.display_mars_widget)
-        self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_spacex_widget)
+        # self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
 
         self.header_widget.setParent(self)
         self.bottom_widget.setParent(self)
@@ -209,8 +213,8 @@ class MainWidget(QWidget):
         self.header_widget.hide()
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.rover_button)
 
-    def display_spacex_widget(self, event=None):
-        self.stacked_widget.setCurrentWidget(self.spacex_view)
+    def display_news_widget(self, event=None):
+        # self.stacked_widget.setCurrentWidget(self.space_news_view)
         self.header_widget.hide()
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.spacex_button)
 
@@ -309,16 +313,102 @@ class LaunchWidget(QWidget):
         return super().event(event)
 
 
-
-# TODO: Randomly selected SpaceX image
-class SpaceXWidget(QWidget):
+class SpaceNewsWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.text = QLabel("SPACEX IMAGES", alignment=Qt.AlignCenter)
-        layout = QVBoxLayout()
-        layout.addWidget(self.text)
-        self.setLayout(layout)
 
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  
+        QScroller.grabGesture(self.scroll_area.viewport(), QScroller.LeftMouseButtonGesture)            # Enable kinetic scrolling
+
+        self.layout.addWidget(self.scroll_area)
+
+        self.setFixedHeight(425)
+
+        self.setStyleSheet("""
+            QWidget {
+                border: none;
+            }
+        """)
+
+        self.article_url = "https://api.spaceflightnewsapi.net/v4/articles?limit=10&is_feature=true"
+        self.report_url = "https://api.spaceflightnewsapi.net/v4/reports?limit=10"
+        self.space_news_article = SpaceNewsAPI(article_url=self.article_url, report_url=self.report_url)
+        self.space_news_report = SpaceNewsAPI(article_url=self.article_url, report_url=self.report_url)
+
+        self.article_results = self.space_news_article.get_filtered_results(type_="article")
+        self.report_results = self.space_news_report.get_filtered_results(type_="report")
+
+        self.api_timer = QTimer(self)
+        self.api_timer.timeout.connect(self.send_article_api_request)
+        self.api_timer.start(timedelta(hours=1).total_seconds() * 1000)
+
+        self.threadpool = QThreadPool()
+        self.send_article_api_request()
+
+    def send_article_api_request(self):
+        worker = RocketLaunchAPIWorker(self.article_url)
+        worker.signals.result.connect(self.handle_article_api_response)
+        worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+        self.send_report_api_request()
+
+    def send_report_api_request(self):
+        worker = RocketLaunchAPIWorker(self.report_url)
+        worker.signals.result.connect(self.handle_report_api_response)
+        worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+
+    @Slot(object)
+    def handle_article_api_response(self, result):
+        if isinstance(result, str) and result.startswith("Error:"):
+            print(result)
+            return
+        
+        self.space_news_article.query_results = result
+        self.space_news_article.get_all_results(type_="article")
+        self.article_results = self.space_news_article.get_filtered_results(type_="article")
+
+    @Slot(object)
+    def handle_report_api_response(self, result):
+        if isinstance(result, str) and result.startswith("Error:"):
+            print(result)
+            return
+        
+        self.space_news_report.query_results = result
+        self.space_news_report.get_all_results(type_="report")
+        self.report_results = self.space_news_report.get_filtered_results(type_="report")
+
+    @Slot(str)
+    def handle_error(error):
+        print(error)
+
+    def event(self, event):
+        if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchUpdate or event.type() == QEvent.TouchEnd:
+            return self.scroll_area.event(event)
+        return super().event(event)
+    
+    def display_news_entries(self, entries, entry_type):
+        existing_widgets = {self.scroll_layout.itemAt(i).widget().news_data['title']: self.scroll_layout.itemAt(i).widget()
+                            for i in range(self.scroll_layout.count())}
+        
+        for news_data in entries:
+            if news_data['title'] in existing_widgets:
+                existing_widgets[news_data['title']].update_data(news_data)
+            else:
+                news_entry = NewsEntryWidget(news_data, entry_type)
+                self.scroll_layout.addWidget(news_entry)
+        
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget.news_data['title'] not in [nd['title'] for nd in entries]:
+                widget.deleteLater()
+    
 
 # TODO: Mars data
 class MarsWidget(QWidget):

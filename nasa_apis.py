@@ -116,6 +116,7 @@ class ApodWidget(QWidget):
             QPushButton:pressed {
                 background-color: #1abc9c;
             }
+            background-color: black;
         """)
         self.download_button.clicked.connect(self.show_apod_popup)
 
@@ -127,6 +128,13 @@ class ApodWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)  
         main_layout.setSpacing(0) 
         self.setLayout(main_layout)
+        self.setObjectName("ApodWidget")  # Set the object name for styling
+
+        self.setStyleSheet("""
+            QWidget#ApodWidget {
+                background-color: black;
+            }
+        """)
 
         self.download_button.setParent(self)
         self.download_button.raise_()

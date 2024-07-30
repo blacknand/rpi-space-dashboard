@@ -4,9 +4,10 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGrap
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect, QGridLayout
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
-from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject, QThreadPool, QRunnable, Signal
+from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject, QThreadPool, QRunnable, Signal, QEvent, QPointF
 import requests
 import sys
+import webbrowser
 
 
 class DragonImageWidget(QWidget):
@@ -340,4 +341,80 @@ class LaunchEntryWidget(QWidget):
         self.countdown_label.setText(countdown_text)
 
 
+class NewsEntryWidget(QWidget):
+    def __init__(self, news_data, entry_type):
+        super().__init__()
+        self.news_data = news_data
+        self.image_downloaded = False
 
+        self.image_label = QLabel(self)
+        self.image_label.setScaledContents(True)
+
+        self.title = QLabel(news_data["title"])
+        self.news_site = QLabel(news_data["news_site"])
+        self.summary = QLabel(news_data["summary"])
+        self.published = QLabel(news_data["published"])
+        self.updated = QLabel(news_data["updated"])
+        self.entry_type = QLabel(entry_type)
+
+        self.url = news_data["url"]
+        
+        self.threadpool = QThreadPool()
+        self.start_image_download(news_data["image_url"])
+
+        self.setLayout(self.create_layout())
+
+        self.setAttribute(Qt.WA_AcceptTouchEvents)
+
+    def create_layout(self):
+        layout = QVBoxLayout()
+        layout.addWidget(self.image_label)
+
+        text_layout = QVBoxLayout()
+        text_layout.addWidget(self.entry_type)
+        text_layout.addWidget(self.title)
+        text_layout.addWidget(self.news_site)
+        text_layout.addWidget(self.summary)
+        text_layout.addWidget(self.published)
+        text_layout.addWidget(self.updated)
+        
+        layout.addLayout(text_layout)
+        return layout
+
+    def start_image_download(self, image_url):
+        if not self.image_downloaded:
+            worker = ImageDownloadWorker(image_url)
+            worker.signals.result.connect(self.handle_image_download)
+            worker.signals.error.connect(self.handle_error)
+            worker.threadpool.start(worker)
+
+    @Slot(object)
+    def handle_image_download(self, image_data):
+        pixmap = QPixmap()
+        pixmap.loadFromData(image_data)
+
+        target_size = self.image_label.size()
+        scaled_pixmap = pixmap.scaled(target_size, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        
+        x_offset = (scaled_pixmap.width() - target_size.width()) // 2
+        y_offset = (scaled_pixmap.height() - target_size.height()) // 2
+        cropped_pixmap = scaled_pixmap.copy(x_offset, y_offset, target_size.width(), target_size.height())
+        
+        self.image_label.setPixmap(cropped_pixmap)
+        self.image_downloaded = True
+
+    @Slot(str)
+    def handle_error(self, error):
+        print(error)
+
+    def event(self, event):
+        if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchEnd:
+            for touch_point in event.touchPoints():
+                if self.rect().contains(touch_point.pos().toPoint()):
+                    webbrowser.open(self.url)
+                    return True
+        elif event.type() == QEvent.MouseButtonPress:
+            if self.rect().contains(event.pos()):
+                webbrowser.open(self.url)
+                return True
+        return super().event(event)

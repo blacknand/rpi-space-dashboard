@@ -1,6 +1,7 @@
 import requests
 import json
 from datetime import datetime, timedelta, timezone, date
+import sys
 
 class RocketLaunchesData:
     def __init__(self, query_url: str):
@@ -38,7 +39,7 @@ class RocketLaunchesData:
         while next_url:
             next_results = self.rocket_query_results(next_url)
             if not next_results:
-                quit()
+                sys.exit()
         
             all_results.extend(next_results["results"])
             next_url = next_results.get("next")
