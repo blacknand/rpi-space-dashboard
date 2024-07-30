@@ -349,36 +349,41 @@ class NewsEntryWidget(QWidget):
 
         self.image_label = QLabel(self)
         self.image_label.setScaledContents(True)
+        self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        self.title = QLabel(news_data["title"])
-        self.news_site = QLabel(news_data["news_site"])
-        self.summary = QLabel(news_data["summary"])
         self.published = QLabel(news_data["published"])
-        self.updated = QLabel(news_data["updated"])
+        self.news_site = QLabel(news_data["news_site"])
+        self.title = QLabel(news_data["title"])
+        self.summary = QLabel(news_data["summary"])
         self.entry_type = QLabel(entry_type)
 
         self.url = news_data["url"]
-        
+
         self.threadpool = QThreadPool()
         self.start_image_download(news_data["image_url"])
 
         self.setLayout(self.create_layout())
 
+        # Enable touch events
         self.setAttribute(Qt.WA_AcceptTouchEvents)
 
     def create_layout(self):
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
+
+        # Left side image
         layout.addWidget(self.image_label)
 
+        # Right side text
         text_layout = QVBoxLayout()
-        text_layout.addWidget(self.entry_type)
-        text_layout.addWidget(self.title)
-        text_layout.addWidget(self.news_site)
-        text_layout.addWidget(self.summary)
         text_layout.addWidget(self.published)
-        text_layout.addWidget(self.updated)
-        
+        text_layout.addWidget(self.news_site)
+        text_layout.addWidget(self.title)
+        text_layout.addWidget(self.summary)
+        text_layout.addWidget(self.entry_type)
+
+        # Adding the right side layout to the main layout
         layout.addLayout(text_layout)
+
         return layout
 
     def start_image_download(self, image_url):
@@ -386,7 +391,7 @@ class NewsEntryWidget(QWidget):
             worker = ImageDownloadWorker(image_url)
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
-            worker.threadpool.start(worker)
+            self.threadpool.start(worker)
 
     @Slot(object)
     def handle_image_download(self, image_data):

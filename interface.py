@@ -112,14 +112,14 @@ class MainWidget(QWidget):
         self.launch_view = LaunchWidget()
         self.apod_view = ApodWidget()
         self.mars_view = MarsWidget()
-        # self.space_news_view = SpaceNewsWidget()
+        self.space_news_view = SpaceNewsWidget()
 
         # Add widgets to QStackedWidget
         self.stacked_widget.addWidget(self.center_grid_widget)
         self.stacked_widget.addWidget(self.launch_view)
         self.stacked_widget.addWidget(self.apod_view)
         self.stacked_widget.addWidget(self.mars_view)
-        # self.stacked_widget.addWidget(self.space_news_view)
+        self.stacked_widget.addWidget(self.space_news_view)
 
         self.setStyleSheet("""
             background-color: #050A30;
@@ -146,7 +146,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
         self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
         self.bottom_widget.buttons_widget.rover_button.clicked.connect(self.display_mars_widget)
-        # self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
+        self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
 
         self.header_widget.setParent(self)
         self.bottom_widget.setParent(self)
@@ -214,7 +214,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.rover_button)
 
     def display_news_widget(self, event=None):
-        # self.stacked_widget.setCurrentWidget(self.space_news_view)
+        self.stacked_widget.setCurrentWidget(self.space_news_view)
         self.header_widget.hide()
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.spacex_button)
 
@@ -373,6 +373,7 @@ class SpaceNewsWidget(QWidget):
         self.space_news_article.query_results = result
         self.space_news_article.get_all_results(type_="article")
         self.article_results = self.space_news_article.get_filtered_results(type_="article")
+        print(f"handle_article_api_response\n\n{self.article_results}")
 
     @Slot(object)
     def handle_report_api_response(self, result):
@@ -383,6 +384,7 @@ class SpaceNewsWidget(QWidget):
         self.space_news_report.query_results = result
         self.space_news_report.get_all_results(type_="report")
         self.report_results = self.space_news_report.get_filtered_results(type_="report")
+        print(f"handle_report_api_response\n\n{self.report_results}")
 
     @Slot(str)
     def handle_error(error):
