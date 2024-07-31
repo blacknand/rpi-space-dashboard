@@ -269,7 +269,7 @@ class LaunchWidget(QWidget):
         worker = RocketLaunchAPIWorker(self.api_url)
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
-        worker.signals.finished.connect(self.finished_thread)
+        # worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
 
     @Slot()
@@ -363,7 +363,7 @@ class SpaceNewsWidget(QWidget):
         worker = RocketLaunchAPIWorker(self.article_url)
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
-        worker.signals.finished.connect(self.finished_thread)
+        # worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
 
     @Slot()
@@ -420,7 +420,8 @@ if __name__ == "__main__":
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
-    # widget.showFullScreen()
-    widget.resize(800, 480)
+    widget.showFullScreen()
+    # widget.resize(800, 480)
     widget.show()
     sys.exit(app.exec())
+ 

@@ -193,7 +193,6 @@ class RocketLaunchAPIWorker(QRunnable):
 
     @Slot()
     def run(self):
-        print(f"Starting API request thread for URL: {self.url}")
         try:
             response = requests.get(self.url)
             response.raise_for_status()
@@ -204,7 +203,6 @@ class RocketLaunchAPIWorker(QRunnable):
             self.signals.finished.emit()
             if response:
                 response.close()
-            print(f"Finished API request thread for URL: {self.url}")
 
 
 class ImageDownloadWorker(QRunnable):
@@ -215,7 +213,6 @@ class ImageDownloadWorker(QRunnable):
 
     @Slot()
     def run(self):
-        print(f"Starting image download thread for URL: {self.url}")
         try:
             # Headers required for images from Wikimedia
             headers = {'User-Agent': 'RpiSpaceDashboard/0.0 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}
@@ -229,9 +226,7 @@ class ImageDownloadWorker(QRunnable):
             self.signals.finished.emit()
             if response:
                 response.close()
-        print(f"Finished image download thread for URL: {self.url}")
             
-
 
 class LaunchEntryWidget(QWidget):
     def __init__(self, launch_data):
@@ -358,41 +353,48 @@ class NewsEntryWidget(QWidget):
         self.news_data = news_data
         self.image_cache = image_cache
 
-        layout = QHBoxLayout()
+        self.setFixedSize(765, 250)
+        self.setObjectName("newsEntryWidget")
 
-        # Image label with fixed size
         self.image_label = QLabel(self)
-        self.image_label.setFixedSize(400, 200)  # Fixed size of 400x200 pixels
+        self.image_label.setGeometry(10, 10, 250, 180) 
         self.image_label.setScaledContents(True)
-        self.image_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        layout.addWidget(self.image_label)
 
-        # Info layout to display the details
-        info_layout = QVBoxLayout()
+        published_date = self.convert_iso(news_data["published"])
+        self.published = QLabel(published_date, self)
+        self.published.setGeometry(270, 10, 200, 20)  
+        self.published.setStyleSheet("color: white; font-size: 12px;")
 
-        # Published date and news site at the top
-        header_layout = QHBoxLayout()
-        self.published = QLabel(news_data["published"])
-        self.news_site = QLabel(news_data["news_site"])
-        header_layout.addWidget(self.published)
-        header_layout.addStretch()
-        header_layout.addWidget(self.news_site)
-        
-        # Title and summary
-        self.title = QLabel(news_data["title"])
-        self.summary = QLabel(news_data["summary"])
-        self.summary.setWordWrap(True)  # Allow the summary to wrap text
+        self.news_site = QLabel(news_data["news_site"], self)
+        self.news_site.setGeometry(480, 10, 200, 20)  
+        self.news_site.setStyleSheet("color: white; font-size: 12px;")
 
-        info_layout.addLayout(header_layout)
-        info_layout.addWidget(self.title)
-        info_layout.addWidget(self.summary)
+        self.title = QLabel(news_data["title"], self)
+        self.title.setGeometry(270, 40, 475, 40)  
+        self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
+        self.title.setAlignment(Qt.AlignCenter)
+        self.title.setWordWrap(True)
 
-        layout.addLayout(info_layout)
+        self.summary = QLabel(news_data["summary"], self)
+        self.summary.setGeometry(270, 90, 475, 100)  
+        self.summary.setStyleSheet("font-size: 14px; color: white;")
+        self.summary.setWordWrap(True)
 
-        self.setLayout(layout)
+        # Applying the style sheet directly to the specific widget
+        self.setStyleSheet("""
+            QWidget#newsEntryWidget {
+                background-color: #2E2D4D; 
+                border-radius: 5%;
+            }
+        """)
 
         self.threadpool = QThreadPool()
         self.start_image_download(news_data["image_url"])
+
+    def convert_iso(self, iso_date):
+        dt = datetime.fromisoformat(iso_date)
+        return dt.strftime("%d/%m/%Y, %H:%M:%S")
+
 
     def start_image_download(self, image_url):
         if image_url in self.image_cache:

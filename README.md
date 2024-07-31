@@ -9,7 +9,7 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 ## Main display
 ![main-dashboard-display](https://github.com/user-attachments/assets/5efea8df-2290-49e1-abe4-34023e6fdb78)
 ## Upcoming rocket launches display
-![upcoming-launches-display](https://github.com/user-attachments/assets/2a6be40f-71ed-4ff7-9f89-98cf1181af76)
+- TODO
 ## NASA APOD display
 ![apod-display](https://github.com/user-attachments/assets/c3b5db63-95f5-4674-911b-d80c57756c47)
 ![apod-info](https://github.com/user-attachments/assets/1a22168a-7c51-4e00-8297-ba314c45ec06)
