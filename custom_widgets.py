@@ -353,7 +353,7 @@ class NewsEntryWidget(QWidget):
         self.news_data = news_data
         self.image_cache = image_cache
 
-        self.setFixedSize(765, 250)
+        self.setFixedSize(765, 200)
         self.setObjectName("newsEntryWidget")
 
         self.image_label = QLabel(self)
@@ -368,6 +368,7 @@ class NewsEntryWidget(QWidget):
         self.news_site = QLabel(news_data["news_site"], self)
         self.news_site.setGeometry(480, 10, 200, 20)  
         self.news_site.setStyleSheet("color: white; font-size: 12px;")
+        self.news_site.setAlignment(Qt.AlignRight)
 
         self.title = QLabel(news_data["title"], self)
         self.title.setGeometry(270, 40, 475, 40)  
@@ -381,10 +382,14 @@ class NewsEntryWidget(QWidget):
         self.summary.setWordWrap(True)
 
         # Applying the style sheet directly to the specific widget
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget#newsEntryWidget {
                 background-color: #2E2D4D; 
                 border-radius: 5%;
+            }
+            QWidget {
+                background-color: #2E2D4D; 
             }
         """)
 
