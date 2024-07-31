@@ -219,7 +219,6 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.spacex_button)
 
 
-
 class LaunchWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -270,7 +269,12 @@ class LaunchWidget(QWidget):
         worker = RocketLaunchAPIWorker(self.api_url)
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
+        worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
+
+    @Slot()
+    def finished_thread(self):
+        print("thread finished")
 
     @Slot(object)
     def handle_api_response(self, result):
@@ -322,9 +326,13 @@ class SpaceNewsWidget(QWidget):
 
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff) 
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  
-        QScroller.grabGesture(self.scroll_area.viewport(), QScroller.LeftMouseButtonGesture)            # Enable kinetic scrolling
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        QScroller.grabGesture(self.scroll_area.viewport(), QScroller.LeftMouseButtonGesture)  # Enable kinetic scrolling
+
+        self.scroll_content = QWidget()
+        self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_area.setWidget(self.scroll_content)
 
         self.layout.addWidget(self.scroll_area)
 
@@ -338,80 +346,66 @@ class SpaceNewsWidget(QWidget):
 
         self.article_url = "https://api.spaceflightnewsapi.net/v4/articles?limit=10&is_feature=true"
         self.report_url = "https://api.spaceflightnewsapi.net/v4/reports?limit=10"
-        self.space_news_article = SpaceNewsAPI(article_url=self.article_url, report_url=self.report_url)
-        self.space_news_report = SpaceNewsAPI(article_url=self.article_url, report_url=self.report_url)
 
-        self.article_results = self.space_news_article.get_filtered_results(type_="article")
-        self.report_results = self.space_news_report.get_filtered_results(type_="report")
+        self.news_obj = SpaceNewsAPI(article_url=self.article_url, report_url=self.report_url)
+        self.news_results = self.news_obj.get_filtered_results(type_="article")
+
+        self.image_cache = {}
 
         self.api_timer = QTimer(self)
-        self.api_timer.timeout.connect(self.send_article_api_request)
-        self.api_timer.start(timedelta(hours=1).total_seconds() * 1000)
+        self.api_timer.timeout.connect(self.send_api_request)
+        self.api_timer.start(timedelta(minutes=1).total_seconds() * 1000)
 
         self.threadpool = QThreadPool()
-        self.send_article_api_request()
+        self.send_api_request()
 
-    def send_article_api_request(self):
+    def send_api_request(self):
         worker = RocketLaunchAPIWorker(self.article_url)
-        worker.signals.result.connect(self.handle_article_api_response)
+        worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
-        self.threadpool.start(worker)
-        self.send_report_api_request()
-
-    def send_report_api_request(self):
-        worker = RocketLaunchAPIWorker(self.report_url)
-        worker.signals.result.connect(self.handle_report_api_response)
-        worker.signals.error.connect(self.handle_error)
+        worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
 
-    @Slot(object)
-    def handle_article_api_response(self, result):
-        if isinstance(result, str) and result.startswith("Error:"):
-            print(result)
-            return
-        
-        self.space_news_article.query_results = result
-        self.space_news_article.get_all_results(type_="article")
-        self.article_results = self.space_news_article.get_filtered_results(type_="article")
-        print(f"handle_article_api_response\n\n{self.article_results}")
+    @Slot()
+    def finished_thread(self):
+        print("thread finished")
 
     @Slot(object)
-    def handle_report_api_response(self, result):
-        if isinstance(result, str) and result.startswith("Error:"):
+    def handle_api_response(self, result):
+        if isinstance(result, str):
             print(result)
             return
-        
-        self.space_news_report.query_results = result
-        self.space_news_report.get_all_results(type_="report")
-        self.report_results = self.space_news_report.get_filtered_results(type_="report")
-        print(f"handle_report_api_response\n\n{self.report_results}")
+
+        self.news_obj.query_results = result
+        self.news_results = self.news_obj.get_filtered_results(type_="article")
+        self.update_news()
 
     @Slot(str)
-    def handle_error(error):
+    def handle_error(self, error):
         print(error)
+
+    def update_news(self):
+        self.display_news(self.news_results)
+
+    def display_news(self, news):
+        # Clear existing widgets
+        while self.scroll_layout.count() > 0:
+            widget = self.scroll_layout.takeAt(0).widget()
+            if widget is not None:
+                widget.deleteLater()
+        
+        # Add new news entries
+        for news_data in news:
+            news_entry = NewsEntryWidget(news_data, "article", image_cache=self.image_cache)
+            self.scroll_layout.addWidget(news_entry)
 
     def event(self, event):
         if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchUpdate or event.type() == QEvent.TouchEnd:
             return self.scroll_area.event(event)
         return super().event(event)
-    
-    def display_news_entries(self, entries, entry_type):
-        existing_widgets = {self.scroll_layout.itemAt(i).widget().news_data['title']: self.scroll_layout.itemAt(i).widget()
-                            for i in range(self.scroll_layout.count())}
-        
-        for news_data in entries:
-            if news_data['title'] in existing_widgets:
-                existing_widgets[news_data['title']].update_data(news_data)
-            else:
-                news_entry = NewsEntryWidget(news_data, entry_type)
-                self.scroll_layout.addWidget(news_entry)
-        
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget.news_data['title'] not in [nd['title'] for nd in entries]:
-                widget.deleteLater()
-    
 
+
+    
 # TODO: Mars data
 class MarsWidget(QWidget):
     def __init__(self):
@@ -426,5 +420,7 @@ if __name__ == "__main__":
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
-    widget.showFullScreen()
+    # widget.showFullScreen()
+    widget.resize(800, 480)
+    widget.show()
     sys.exit(app.exec())

@@ -193,6 +193,7 @@ class RocketLaunchAPIWorker(QRunnable):
 
     @Slot()
     def run(self):
+        print(f"Starting API request thread for URL: {self.url}")
         try:
             response = requests.get(self.url)
             response.raise_for_status()
@@ -201,6 +202,9 @@ class RocketLaunchAPIWorker(QRunnable):
             self.signals.error.emit(f"Error: {e}\nError querying {self.url}")
         finally:
             self.signals.finished.emit()
+            if response:
+                response.close()
+            print(f"Finished API request thread for URL: {self.url}")
 
 
 class ImageDownloadWorker(QRunnable):
@@ -211,8 +215,11 @@ class ImageDownloadWorker(QRunnable):
 
     @Slot()
     def run(self):
+        print(f"Starting image download thread for URL: {self.url}")
         try:
-            response = requests.get(self.url)
+            # Headers required for images from Wikimedia
+            headers = {'User-Agent': 'RpiSpaceDashboard/0.0 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}
+            response = requests.get(self.url, headers=headers)
             response.raise_for_status()
             image_data = response.content
             self.signals.result.emit(image_data)
@@ -220,6 +227,10 @@ class ImageDownloadWorker(QRunnable):
             self.signals.error.emit(f"Error: {e}\nError downloading {self.url}")
         finally:
             self.signals.finished.emit()
+            if response:
+                response.close()
+        print(f"Finished image download thread for URL: {self.url}")
+            
 
 
 class LaunchEntryWidget(QWidget):
@@ -342,84 +353,76 @@ class LaunchEntryWidget(QWidget):
 
 
 class NewsEntryWidget(QWidget):
-    def __init__(self, news_data, entry_type):
+    def __init__(self, news_data, entry_type, image_cache):
         super().__init__()
         self.news_data = news_data
-        self.image_downloaded = False
+        self.image_cache = image_cache
 
+        layout = QHBoxLayout()
+
+        # Image label with fixed size
         self.image_label = QLabel(self)
+        self.image_label.setFixedSize(400, 200)  # Fixed size of 400x200 pixels
         self.image_label.setScaledContents(True)
-        self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.image_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        layout.addWidget(self.image_label)
 
+        # Info layout to display the details
+        info_layout = QVBoxLayout()
+
+        # Published date and news site at the top
+        header_layout = QHBoxLayout()
         self.published = QLabel(news_data["published"])
         self.news_site = QLabel(news_data["news_site"])
+        header_layout.addWidget(self.published)
+        header_layout.addStretch()
+        header_layout.addWidget(self.news_site)
+        
+        # Title and summary
         self.title = QLabel(news_data["title"])
         self.summary = QLabel(news_data["summary"])
-        self.entry_type = QLabel(entry_type)
+        self.summary.setWordWrap(True)  # Allow the summary to wrap text
 
-        self.url = news_data["url"]
+        info_layout.addLayout(header_layout)
+        info_layout.addWidget(self.title)
+        info_layout.addWidget(self.summary)
+
+        layout.addLayout(info_layout)
+
+        self.setLayout(layout)
 
         self.threadpool = QThreadPool()
         self.start_image_download(news_data["image_url"])
 
-        self.setLayout(self.create_layout())
-
-        # Enable touch events
-        self.setAttribute(Qt.WA_AcceptTouchEvents)
-
-    def create_layout(self):
-        layout = QHBoxLayout()
-
-        # Left side image
-        layout.addWidget(self.image_label)
-
-        # Right side text
-        text_layout = QVBoxLayout()
-        text_layout.addWidget(self.published)
-        text_layout.addWidget(self.news_site)
-        text_layout.addWidget(self.title)
-        text_layout.addWidget(self.summary)
-        text_layout.addWidget(self.entry_type)
-
-        # Adding the right side layout to the main layout
-        layout.addLayout(text_layout)
-
-        return layout
-
     def start_image_download(self, image_url):
-        if not self.image_downloaded:
+        if image_url in self.image_cache:
+            self.handle_image_download(self.image_cache[image_url])
+        else:
             worker = ImageDownloadWorker(image_url)
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
 
-    @Slot(object)
+    @Slot(tuple)
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
         pixmap.loadFromData(image_data)
 
-        target_size = self.image_label.size()
-        scaled_pixmap = pixmap.scaled(target_size, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
-        
+        # Define the fixed size for the image
+        target_size = QSize(400, 200)
+
+        # Scale the pixmap to fit within the target size, keeping aspect ratio
+        scaled_pixmap = pixmap.scaled(target_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        # Calculate offsets to crop the image to the fixed size
         x_offset = (scaled_pixmap.width() - target_size.width()) // 2
         y_offset = (scaled_pixmap.height() - target_size.height()) // 2
         cropped_pixmap = scaled_pixmap.copy(x_offset, y_offset, target_size.width(), target_size.height())
-        
+
         self.image_label.setPixmap(cropped_pixmap)
-        self.image_downloaded = True
+        self.image_cache[self.news_data["image_url"]] = image_data  # Cache the image data
 
     @Slot(str)
     def handle_error(self, error):
         print(error)
 
-    def event(self, event):
-        if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchEnd:
-            for touch_point in event.touchPoints():
-                if self.rect().contains(touch_point.pos().toPoint()):
-                    webbrowser.open(self.url)
-                    return True
-        elif event.type() == QEvent.MouseButtonPress:
-            if self.rect().contains(event.pos()):
-                webbrowser.open(self.url)
-                return True
-        return super().event(event)
