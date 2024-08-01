@@ -360,28 +360,29 @@ class NewsEntryWidget(QWidget):
         self.image_label.setGeometry(10, 10, 250, 180) 
         self.image_label.setScaledContents(True)
 
+        start_x = 270 + 10
+
         published_date = self.convert_iso(news_data["published"])
         self.published = QLabel(published_date, self)
-        self.published.setGeometry(270, 10, 200, 20)  
+        self.published.setGeometry(start_x, 10, 200, 20)  
         self.published.setStyleSheet("color: white; font-size: 12px;")
 
         self.news_site = QLabel(news_data["news_site"], self)
-        self.news_site.setGeometry(480, 10, 200, 20)  
+        self.news_site.setGeometry(540, 10, 200, 20)  
         self.news_site.setStyleSheet("color: white; font-size: 12px;")
         self.news_site.setAlignment(Qt.AlignRight)
 
         self.title = QLabel(news_data["title"], self)
-        self.title.setGeometry(270, 40, 475, 40)  
+        self.title.setGeometry(start_x, 40, 475, 40)  
         self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setWordWrap(True)
 
         self.summary = QLabel(news_data["summary"], self)
-        self.summary.setGeometry(270, 90, 475, 100)  
+        self.summary.setGeometry(start_x, 90, 475, 100)  
         self.summary.setStyleSheet("font-size: 14px; color: white;")
         self.summary.setWordWrap(True)
 
-        # Applying the style sheet directly to the specific widget
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget#newsEntryWidget {
