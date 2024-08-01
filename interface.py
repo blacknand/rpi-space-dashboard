@@ -110,14 +110,14 @@ class MainWidget(QWidget):
         # Create other views
         self.launch_view = LaunchWidget()
         self.apod_view = ApodWidget()
-        # self.bme_data_view = BMEDataWidget()
+        self.bme_data_view = BMEDataWidget()
         self.space_news_view = SpaceNewsWidget()
 
         # Add widgets to QStackedWidget
         self.stacked_widget.addWidget(self.center_grid_widget)
         self.stacked_widget.addWidget(self.launch_view)
         self.stacked_widget.addWidget(self.apod_view)
-        # self.stacked_widget.addWidget(self.bme_data_view)
+        self.stacked_widget.addWidget(self.bme_data_view)
         self.stacked_widget.addWidget(self.space_news_view)
 
         self.setStyleSheet("""
@@ -144,7 +144,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.dragon_button.clicked.connect(self.display_main_widget)
         self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
         self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
-        # self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
+        self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
         self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
 
         self.header_widget.setParent(self)
@@ -210,7 +210,7 @@ class MainWidget(QWidget):
     def display_bme_data_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.bme_data_view)
         self.header_widget.hide()
-        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.rover_button)
+        self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.bme_data_button)
 
     def display_news_widget(self, event=None):
         self.stacked_widget.setCurrentWidget(self.space_news_view)
