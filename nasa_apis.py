@@ -99,6 +99,7 @@ class ApodWidget(QWidget):
         self.apod_label.setScaledContents(False)
         self.apod_label.setAlignment(Qt.AlignCenter)
         self.apod_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.apod_label.setStyleSheet("background-color: transparent;")
 
         self.download_button = QPushButton("!", self)
         self.download_button.setFixedSize(30, 30)
@@ -116,7 +117,6 @@ class ApodWidget(QWidget):
             QPushButton:pressed {
                 background-color: #1abc9c;
             }
-            background-color: black;
         """)
         self.download_button.clicked.connect(self.show_apod_popup)
 
@@ -128,8 +128,8 @@ class ApodWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)  
         main_layout.setSpacing(0) 
         self.setLayout(main_layout)
-        self.setObjectName("ApodWidget")  # Set the object name for styling
-
+        self.setObjectName("ApodWidget")  
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget#ApodWidget {
                 background-color: black;
@@ -138,7 +138,7 @@ class ApodWidget(QWidget):
 
         self.download_button.setParent(self)
         self.download_button.raise_()
-        self.download_button.move(self.width() - self.download_button.width() - 10, 10)  # Adjust the position as needed    
+        self.download_button.move(self.width() - self.download_button.width() - 10, 10)  
 
         self.threadpool = QThreadPool()
 
