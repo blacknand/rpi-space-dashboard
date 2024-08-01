@@ -45,17 +45,23 @@ class SpaceNewsAPI:
     def get_filtered_results(self, type_=None, max_results=10):
         if self.query_results is None:
             self.query_results = self.get_all_results(type_)
-        self.filtered_results = [
-            {
-                "title": result["title"],
-                "url": result["url"],
-                "image_url": result["image_url"],
-                "news_site": result["news_site"],
-                "summary": result["summary"],
-                "published": result["published_at"],
-                "updated": result["updated_at"]
-            }
-            for index, result in enumerate(self.query_results["results"]) if index < max_results
-        ]
+                
+        self.filtered_results = []
+        
+        for index, result in enumerate(self.query_results["results"]):
+            if index >= max_results:
+                break
+            self.filtered_results.append(
+                {
+                    "title": result["title"],
+                    "url": result["url"],
+                    "image_url": result["image_url"],
+                    "news_site": result["news_site"],
+                    "summary": result["summary"],
+                    "published": result["published_at"],
+                    "updated": result["updated_at"]
+                }
+            )
+        
         return self.filtered_results
 

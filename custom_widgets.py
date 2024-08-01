@@ -1,14 +1,12 @@
-from datetime import datetime, date, timezone, timedelta
+import sqlite3
 from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
-from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
-from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect, QGridLayout
+from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool
+from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
-from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject, QThreadPool, QRunnable, Signal, QEvent, QPointF
-from db_operations import CollectBMEWorker, BMEHourMaxWorker, BMEDayMaxWorker, DBOperations
-import requests
-import sys
-import webbrowser
+from datetime import datetime, date, timezone, timedelta
+from workers import ImageDownloadWorker, CollectBMEWorker, BMEDayMaxWorker, BMEHourMaxWorker
+from db_operations import DBOperations
 
 
 class DragonImageWidget(QWidget):
@@ -174,59 +172,6 @@ class FooterButtonsWidget(QWidget):
             line_y = button_rect.bottom() + 5  # Position the line just below the button
             painter.setPen(QColor("white"))
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
-
-
-class WorkerSignals(QObject):
-    result = Signal(object)
-    error = Signal(str)
-    finished = Signal()
-
-    def __init__(self):
-        super().__init__()
-
-
-class RocketLaunchAPIWorker(QRunnable):
-    # Handles LL2 API request in seperate thread
-    def __init__(self, url):
-        super().__init__()
-        self.url = url
-        self.signals = WorkerSignals()
-
-    @Slot()
-    def run(self):
-        try:
-            response = requests.get(self.url)
-            response.raise_for_status()
-            self.signals.result.emit(response.json())  # Emit API response
-        except requests.RequestException as e:
-            self.signals.error.emit(f"Error: {e}\nError querying {self.url}")
-        finally:
-            self.signals.finished.emit()
-            if response:
-                response.close()
-
-
-class ImageDownloadWorker(QRunnable):
-    def __init__(self, url):
-        super().__init__()
-        self.url = url
-        self.signals = WorkerSignals()
-
-    @Slot()
-    def run(self):
-        try:
-            # Headers required for images from Wikimedia
-            headers = {'User-Agent': 'RpiSpaceDashboard/0.0 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}
-            response = requests.get(self.url, headers=headers)
-            response.raise_for_status()
-            image_data = response.content
-            self.signals.result.emit(image_data)
-        except requests.RequestException as e:
-            self.signals.error.emit(f"Error: {e}\nError downloading {self.url}")
-        finally:
-            self.signals.finished.emit()
-            if response:
-                response.close()
             
 
 class LaunchEntryWidget(QWidget):

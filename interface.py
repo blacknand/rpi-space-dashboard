@@ -1,16 +1,15 @@
 import sys
 import signal
-import traceback
-from PySide6.QtCore import Qt, QTimer, QEvent, Slot, QObject, QThreadPool, Signal, QRunnable
-from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea, QScroller
+from PySide6.QtCore import Qt, QTimer, QEvent, Slot, QThreadPool
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea, QScroller
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
-from custom_widgets import *
+from custom_widgets import DragonImageWidget, FooterButtonsWidget, BMEDataWidget, HeaderWidget, LaunchEntryWidget, NewsEntryWidget
 from rocket_launches import RocketLaunchesData
-from nasa_apis import *
-from space_news import *
+from nasa_apis import ApodWidget
+from space_news import SpaceNewsAPI
+from workers import RocketLaunchAPIWorker
 from datetime import timedelta
-
 
 
 class CenterGridWidget(QWidget):
@@ -111,14 +110,14 @@ class MainWidget(QWidget):
         # Create other views
         self.launch_view = LaunchWidget()
         self.apod_view = ApodWidget()
-        self.bme_data_view = BMEDataWidget()
+        # self.bme_data_view = BMEDataWidget()
         self.space_news_view = SpaceNewsWidget()
 
         # Add widgets to QStackedWidget
         self.stacked_widget.addWidget(self.center_grid_widget)
         self.stacked_widget.addWidget(self.launch_view)
         self.stacked_widget.addWidget(self.apod_view)
-        self.stacked_widget.addWidget(self.bme_data_view)
+        # self.stacked_widget.addWidget(self.bme_data_view)
         self.stacked_widget.addWidget(self.space_news_view)
 
         self.setStyleSheet("""
@@ -145,7 +144,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.dragon_button.clicked.connect(self.display_main_widget)
         self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
         self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
-        self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
+        # self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
         self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
 
         self.header_widget.setParent(self)

@@ -1,14 +1,15 @@
-from dotenv import load_dotenv
 import requests
 import json
 import os
 import importlib.util
 import sys
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from custom_widgets import ImageDownloadWorker, WorkerSignals
-from PySide6.QtCore import Slot, QThreadPool, QRunnable, QTimer, QTime, Qt
+from custom_widgets import ImageDownloadWorker
+from PySide6.QtCore import Slot, QThreadPool, QTimer, QTime, Qt
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QStackedLayout, QSizePolicy
 from PySide6.QtGui import QPixmap
+from workers import APODWorker
 
 load_dotenv("keys.env")
 
@@ -61,27 +62,6 @@ class APODPopUpWidget(QWidget):
         self.title.setText(title)
         self.explanation.setText(explanation)
         self.setWindowTitle(f"APOD - {apod_date}")
-
-
-class APODWorker(QRunnable):
-    def __init__(self, date=None):
-        super().__init__()
-        self.signals = WorkerSignals()
-        self.date = date
-
-    @Slot()
-    def run(self):
-        try:
-            url = f'https://api.nasa.gov/planetary/apod?api_key={os.environ.get("nasa_key")}'
-            if self.date:
-                url += f"&date={self.date}"
-            raw_response = requests.get(url).text
-            response = json.loads(raw_response)
-            self.signals.result.emit(response)
-        except requests.RequestException as e:
-            self.signals.error.emit(f"APOD Error: {e}")
-        finally:
-            self.signals.finished.emit()
 
 
 class ApodWidget(QWidget):
