@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect, QGridLayout
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
 from PySide6.QtCore import Qt, QRectF, QThread, Signal, Slot, QObject, QThreadPool, QRunnable, Signal, QEvent, QPointF
+from db_operations import CollectBMEWorker, BMEHourMaxWorker, BMEDayMaxWorker, DBOperations
 import requests
 import sys
 import webbrowser
@@ -111,13 +112,13 @@ class FooterButtonsWidget(QWidget):
         self.dragon_button = self.create_icon_button("images/spacex_images/dragon-button-icon.png")
         self.fh_button = self.create_icon_button("images/spacex_images/fh-button-icon.png")
         self.apod_button = self.create_icon_button("images/nasa_images/nasa-button.png")
-        self.rover_button = self.create_icon_button("images/nasa_images/rover-button-icon.png")
-        self.spacex_button = self.create_icon_button("images/spacex_images/spacex-button-icon.png")
+        self.bme_data_button = self.create_icon_button("images/nasa_images/space-data.png")
+        self.spacex_button = self.create_icon_button("images/nasa_images/space-station.png")
 
         layout.addWidget(self.dragon_button)
         layout.addWidget(self.fh_button)
         layout.addWidget(self.apod_button)
-        layout.addWidget(self.rover_button)
+        layout.addWidget(self.bme_data_button)
         layout.addWidget(self.spacex_button)
         self.setFixedSize(60,400)
 
@@ -434,3 +435,67 @@ class NewsEntryWidget(QWidget):
     def handle_error(self, error):
         print(error)
 
+
+class BMEDataWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        db_obj = DBOperations()
+        conn = sqlite3.connect("sensor_setup.db")
+        db_obj.db_config("sensor_setup.db", conn)
+        db_obj.setup_db()
+        conn.close()
+
+        self.test1 = QLabel()
+        self.test2 = QLabel()
+
+        self.bme_var_timer = QTimer(self)
+        self.bme_var_timer.timeout.connect(self.collect_bme_worker)
+        self.bme_var_timer.start(60000)
+
+        self.bme_hour_timer = QTimer(self)
+        self.bme_hour_timer.timeout.connect(self.hour_max_worker)
+        self.bme_hour_timer.start(3600000)
+
+        self.bme_day_timer = QTimer(self)
+        self.bme_day_timer.timeout.connect(self.day_max_worker)
+        self.bme_day_timer.start(86400000)
+
+        self.threadpool = QThreadPool()
+        self.setup_widget()
+
+    def setup_widget(self):
+        pass
+
+    def collect_bme_worker(self):
+        worker = CollectBMEWorker()
+        worker.signals.result.connect(self.null_method)
+        worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+
+    def hour_max_worker(self):
+        worker = BMEHourMaxWorker()
+        worker.signals.result.connect(self.plot_hour_max)
+        worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+
+    def day_max_worker(self):
+        worker = BMEDayMaxWorker()
+        worker.signals.result.connect(self.plot_hour_day)
+        worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+
+    @Slot(object)
+    def null_method():
+        pass
+
+    @Slot(str)
+    def handle_error(self, error):  
+        print(error)
+
+    @Slot(object)
+    def plot_hour_max(self):
+        self.test1.setText("test1")
+
+    @Slot(object)
+    def plot_day_max(self):
+        self.test2.setText("test2")
