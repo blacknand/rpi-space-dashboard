@@ -266,7 +266,7 @@ class LaunchWidget(QWidget):
 
     def send_api_request(self):
         worker = APIWorker(self.api_url)
-        print(f"Active threads: {self.threadpool.activeThreadCount()}")
+        # print(f"Active threads: {self.threadpool.activeThreadCount()}")
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
         # worker.signals.finished.connect(self.finished_thread)
@@ -361,7 +361,7 @@ class SpaceNewsWidget(QWidget):
 
     def send_api_request(self):
         worker = APIWorker(self.article_url)
-        print(f"Active threads: {self.threadpool.activeThreadCount()}")
+        # print(f"Active threads: {self.threadpool.activeThreadCount()}")
 
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)

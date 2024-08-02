@@ -5,7 +5,9 @@ from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
 from datetime import datetime, date, timezone, timedelta
-from workers import ImageDownloadWorker, CollectBMEWorker, BMEDayMaxWorker, BMEHourMaxWorker
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from workers import ImageDownloadWorker, CollectBMEWorker
 from db_operations import DBOperations
 
 
@@ -248,7 +250,7 @@ class LaunchEntryWidget(QWidget):
     def start_image_download(self, image_url):
         if not self.image_downloaded:
             worker = ImageDownloadWorker(image_url)
-            print(f"Active threads: {self.threadpool.activeThreadCount()}")
+            # print(f"Active threads: {self.threadpool.activeThreadCount()}")
 
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
@@ -356,9 +358,8 @@ class NewsEntryWidget(QWidget):
         if image_url in self.image_cache:
             self.handle_image_download(self.image_cache[image_url])
         else:
-            worker = ImageDownloadWorker('https://image_url')
-            print(f"Active threads: {self.threadpool.activeThreadCount()}")
-
+            worker = ImageDownloadWorker(image_url)
+            # print(f"Active threads: {self.threadpool.activeThreadCount()}")
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
@@ -385,6 +386,16 @@ class NewsEntryWidget(QWidget):
         print(error)
 
 
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=4, height=2, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super().__init__(fig)
+        self.setParent(parent)
+        FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
+
+
 class BMEDataWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -394,45 +405,55 @@ class BMEDataWidget(QWidget):
         self.db_obj.setup_db()
         conn.close()
 
-        layout = QVBoxLayout()
+        self.current_hour = datetime.now().hour
+        self.current_day = date.today()
 
+        main_layout = QVBoxLayout()
+
+        # Center the clock and date at the top
         self.clock_label = QLabel()
-        layout.addWidget(self.clock_label)
+        self.cur_date_label = QLabel()
 
-        # Create a QWidget for the button container
-        button_container = QWidget()
-        button_container.setObjectName("buttonContainer")
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(10)  # Small gap between date and time
+        header_layout.setContentsMargins(0, 0, 0, 0)  # Reduce spacing around the text
 
-        button_layout = QHBoxLayout(button_container)
-        hour_button = QPushButton("Fetch Hourly Data")
-        hour_button.clicked.connect(self.plot_hour_max)
-        button_layout.addWidget(hour_button)
+        header_layout.addStretch()  # Adds stretchable space before the content
+        header_layout.addWidget(self.clock_label, alignment=Qt.AlignCenter)
+        header_layout.addWidget(self.cur_date_label, alignment=Qt.AlignCenter)
+        header_layout.addStretch()  # Adds stretchable space after the content
 
-        day_button = QPushButton("Fetch Daily Data")
-        day_button.clicked.connect(self.plot_day_max)
-        button_layout.addWidget(day_button)
+        header_widget = QWidget()
+        header_widget.setLayout(header_layout)
 
-        layout.addWidget(button_container)
-        self.setLayout(layout)
+        main_layout.addWidget(header_widget)
 
+        # Create a horizontal layout for the graphs
+        graph_layout = QHBoxLayout()
+
+        # Create the first canvas for hourly data
+        self.canvas_hourly = MplCanvas(self, width=4, height=2, dpi=100)
+        graph_layout.addWidget(self.canvas_hourly)
+
+        # Create the second canvas for daily data
+        self.canvas_daily = MplCanvas(self, width=4, height=2, dpi=100)
+        graph_layout.addWidget(self.canvas_daily)
+
+        graph_widget = QWidget()
+        graph_widget.setLayout(graph_layout)
+
+        main_layout.addWidget(graph_widget)
+        self.setLayout(main_layout)
+
+        self.setFixedSize(800, 415)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QLabel {
                 color: white;
                 font-size: 18px;
             }
-            QPushButton {
-                color: white;
-                font-size: 18px;
-                background-color: #444;
-                border: none;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #666;
-            }
-            QWidget#buttonContainer {
-                margin-top: 200px; 
+            QWidget {
+                background-color: transparent;
             }
         """)
 
@@ -455,22 +476,42 @@ class BMEDataWidget(QWidget):
         self.threadpool = QThreadPool()
 
     def update_clock(self):
-        current_time = datetime.now().strftime("%H:%M:%S")
-        self.clock_label.setText(f"Current Time: {current_time}")
+        current_time = datetime.now()
+        today = date.today()
+
+        self.clock_label.setText(current_time.strftime("%H:%M:%S"))
+        self.cur_date_label.setText(f'{today.strftime("%a")}, {today.strftime("%b")} {today.strftime("%d")}')
+
+        # Check if a new hour has started
+        if current_time.hour != self.current_hour:
+            self.current_hour = current_time.hour
+            self.plot_hour_max()
+
+        # Check if a new day has started
+        if today != self.current_day:
+            self.current_day = today
+            self.clear_hourly_data() 
+            self.plot_day_max()
 
     def collect_bme_worker(self):
         worker = CollectBMEWorker()
         worker.signals.result.connect(self.null_method)
         worker.signals.error.connect(self.handle_error)
-        # worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
+
+    def clear_hourly_data(self):
+        conn = sqlite3.connect("sensor_setup.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM sensor_hour_max")
+        conn.commit()
+        conn.close()
 
     @Slot(object)
     def null_method(self, result):
         print(result)
 
     @Slot()
-    def finished_thread():
+    def finished_thread(self):
         print("thread finished")
 
     @Slot(str)
@@ -479,8 +520,34 @@ class BMEDataWidget(QWidget):
 
     @Slot(object)
     def plot_hour_max(self):
-        print(f"Hourly: {self.db_obj.fetch_hourly_data()}")
+        hourly_data = self.db_obj.fetch_hourly_data()
+        if not hourly_data:
+            print("No hourly data available.")
+        else:
+            print(f"Hourly: {hourly_data}")
+            self.plot_data(self.canvas_hourly, hourly_data, "Hourly Data", "Hour", "Max Temp & Humidity")
 
     @Slot(object)
     def plot_day_max(self):
-        print(f"Daily: {self.db_obj.fetch_daily_data()}")
+        daily_data = self.db_obj.fetch_daily_data()
+        if not daily_data:
+            print("No daily data available.")
+        else:
+            print(f"Daily: {daily_data}")
+            self.plot_data(self.canvas_daily, daily_data, "Daily Data", "Day", "Max Temp & Humidity")
+
+    def plot_data(self, canvas, data, title, x_label, y_label):
+        times = [datetime.strptime(entry[0], "%Y-%m-%d %H:%M:%S") for entry in data]
+        temps = [entry[1] for entry in data]
+        humidity = [entry[2] for entry in data]
+
+        canvas.axes.clear()
+        canvas.axes.plot(times, temps, label="Max Temperature", marker='o')
+        canvas.axes.plot(times, humidity, label="Max Humidity", marker='o')
+        canvas.axes.set_title(title)
+        canvas.axes.set_xlabel(x_label)
+        canvas.axes.set_ylabel(y_label)
+        canvas.axes.legend()
+        canvas.axes.grid(True)
+        canvas.axes.tick_params(axis='x', rotation=15)
+        canvas.draw()
