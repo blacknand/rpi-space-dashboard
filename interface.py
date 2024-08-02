@@ -1,7 +1,9 @@
 import sys
 import signal
+import schedule
 from PySide6.QtCore import Qt, QTimer, QEvent, Slot, QThreadPool
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea, QScroller
+from rpi_backlight import Backlight
 from rocket_launches import RocketLaunchesData
 from bme280 import TempWidget, HumidityWidget, PressureWidget, DewPointWidget, bme280_results
 from custom_widgets import DragonImageWidget, FooterButtonsWidget, BMEDataWidget, HeaderWidget, LaunchEntryWidget, NewsEntryWidget
@@ -410,7 +412,24 @@ class SpaceNewsWidget(QWidget):
         return super().event(event)
 
 
+class RpiInterface:
+    def __init__(self):
+        self.backlight = Backlight()
+
+    def turn_brightness_down(self):
+        with backlight.fade(duration=5):
+            backlight.brightness = 0
+
+    def turn_brightness_up(self):
+        backlight.brightness = 100
+
+
 if __name__ == "__main__":
+    backlight = RpiInterface()
+    # Turn screen off at 11 PM and back on at 6 AM
+    schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
+    schedule.every().day.at("23:00").do(backlight.turn_brightness_down)
+
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
