@@ -110,14 +110,14 @@ class MainWidget(QWidget):
         # Create other views
         self.launch_view = LaunchWidget()
         self.apod_view = ApodWidget()
-        # self.bme_data_view = BMEDataWidget()
+        self.bme_data_view = BMEDataWidget()
         self.space_news_view = SpaceNewsWidget()
 
         # Add widgets to QStackedWidget
         self.stacked_widget.addWidget(self.center_grid_widget)
         self.stacked_widget.addWidget(self.launch_view)
         self.stacked_widget.addWidget(self.apod_view)
-        # self.stacked_widget.addWidget(self.bme_data_view)
+        self.stacked_widget.addWidget(self.bme_data_view)
         self.stacked_widget.addWidget(self.space_news_view)
 
         self.setStyleSheet("""
@@ -144,7 +144,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.dragon_button.clicked.connect(self.display_main_widget)
         self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
         self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
-        # self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
+        self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
         self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
 
         self.header_widget.setParent(self)
@@ -208,7 +208,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.apod_button)
 
     def display_bme_data_widget(self, event=None):
-        # self.stacked_widget.setCurrentWidget(self.bme_data_view)
+        self.stacked_widget.setCurrentWidget(self.bme_data_view)
         self.header_widget.hide()
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.bme_data_button)
 
@@ -354,7 +354,7 @@ class SpaceNewsWidget(QWidget):
 
         self.api_timer = QTimer(self)
         self.api_timer.timeout.connect(self.send_api_request)
-        self.api_timer.start(timedelta(minutes=1).total_seconds() * 1000)
+        self.api_timer.start(timedelta(hours=1).total_seconds() * 1000)
 
         self.threadpool = QThreadPool()
         self.send_api_request()
@@ -393,7 +393,7 @@ class SpaceNewsWidget(QWidget):
         # Add new news entries if not already displayed
         for news_data in news:
             if news_data['url'] not in displayed_urls:
-                news_entry = NewsEntryWidget(news_data, "article", image_cache=self.image_cache)
+                news_entry = NewsEntryWidget(news_data, image_cache=self.image_cache)
                 self.scroll_layout.addWidget(news_entry)
                 displayed_urls.add(news_data['url'])
 

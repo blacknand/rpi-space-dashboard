@@ -99,9 +99,7 @@ class CollectBMEWorker(QRunnable):
             temp = bme_data[0]
             humidity = bme_data[1]
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print(f"temp, humidity type: {type(temp), type(humidity)}")
             if isinstance(temp, float) and isinstance(humidity, float):
-                print("Collecting BME data and storing it in the database")
                 conn = sqlite3.connect("sensor_data.db")
                 cursor = conn.cursor()
                 cursor.execute("""
@@ -116,7 +114,7 @@ class CollectBMEWorker(QRunnable):
                 error_message = "BME sensor has returned either invalid or no data. Check to see if the sensor has falled off the breadboard."
                 self.signals.error.emit(error_message)
         except Exception as e:
-            self.signals.error.emit(str(e))
+            self.signals.error.emit("CollectBMEWorker Exception: {e}")
         finally:
             self.signals.finished.emit()
 
@@ -145,12 +143,12 @@ class BMEHourMaxWorker(QRunnable):
                     VALUES (?, ?, ?)
                 """, (hour, max_temp, max_humidity))
                 conn.commit()
-                self.signals.result.emit("finished")
+                self.signals.result.emit("BME data for hour has been recorded sucessfully")
             conn.close()
         except Exception as e:
-            self.signals.error.emit(e)
+            self.signals.error.emit(f"BMEHourMaxWorker Exception: {e}")
         finally:
-            self.signals.finished.emit("finished max hour worker")
+            self.signals.finished.emit()
 
 
 class BMEDayMaxWorker(QRunnable):
@@ -177,11 +175,11 @@ class BMEDayMaxWorker(QRunnable):
                     VALUES (?, ?, ?)
                 """, (day, max_temp, max_humidity))
                 conn.commit()
-                self.signals.result.emit("hour max worker complete")
+                self.signals.result.emit("BME data for day has been recorded sucessfully")
             conn.close()
         except Exception as e:
-            self.signals.erorr.emit(e)
+            self.signals.error.emit(f"BMEDayMaxWorker: {e}")
         finally:
-            self.signals.result.emit("day max worker finished")
+            self.signals.result.emit()
 # ---------- BME temperature and humidity workers ---------- #
     

@@ -169,7 +169,7 @@ class FooterButtonsWidget(QWidget):
         # Draw the line under the active button
         if self.current_button:
             button_rect = self.current_button.geometry()
-            line_y = button_rect.bottom() + 5  # Position the line just below the button
+            line_y = button_rect.bottom() + 5               # Position the line just below the button
             painter.setPen(QColor("white"))
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
             
@@ -257,8 +257,10 @@ class LaunchEntryWidget(QWidget):
     @Slot(object)
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
-        pixmap.loadFromData(image_data)
-        
+        if not pixmap.loadFromData(image_data):
+            self.handle_error(f"LaunchEntryWidget::handle_image_download: Image download failed for [{image_data}]")
+            pixmap = QPixmap("images/nasa_images/saturn-v-default-image.jpg")
+            
         target_size = self.image_label.size()
         scaled_pixmap = pixmap.scaled(target_size, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
         
@@ -296,7 +298,7 @@ class LaunchEntryWidget(QWidget):
 
 
 class NewsEntryWidget(QWidget):
-    def __init__(self, news_data, entry_type, image_cache):
+    def __init__(self, news_data, image_cache):
         super().__init__()
         self.news_data = news_data
         self.image_cache = image_cache
@@ -354,31 +356,29 @@ class NewsEntryWidget(QWidget):
         if image_url in self.image_cache:
             self.handle_image_download(self.image_cache[image_url])
         else:
-            worker = ImageDownloadWorker(image_url)
+            worker = ImageDownloadWorker('https://image_url')
             print(f"Active threads: {self.threadpool.activeThreadCount()}")
 
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
 
-    @Slot(tuple)
+    @Slot(object)
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
-        pixmap.loadFromData(image_data)
+        if not pixmap.loadFromData(image_data):
+            self.handle_error(f"NewsEntryWidget::handle_image_download: Image download failed for [{image_data}]")
+            pixmap = QPixmap("images/nasa_images/lunar-module-eagle-default.jpg")
 
-        # Define the fixed size for the image
         target_size = QSize(400, 200)
-
-        # Scale the pixmap to fit within the target size, keeping aspect ratio
         scaled_pixmap = pixmap.scaled(target_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
-        # Calculate offsets to crop the image to the fixed size
         x_offset = (scaled_pixmap.width() - target_size.width()) // 2
         y_offset = (scaled_pixmap.height() - target_size.height()) // 2
         cropped_pixmap = scaled_pixmap.copy(x_offset, y_offset, target_size.width(), target_size.height())
 
         self.image_label.setPixmap(cropped_pixmap)
-        self.image_cache[self.news_data["image_url"]] = image_data  # Cache the image data
+        self.image_cache[self.news_data["image_url"]] = image_data          # Cache the image data
 
     @Slot(str)
     def handle_error(self, error):
@@ -388,52 +388,81 @@ class NewsEntryWidget(QWidget):
 class BMEDataWidget(QWidget):
     def __init__(self):
         super().__init__()
-        db_obj = DBOperations()
+        self.db_obj = DBOperations()
         conn = sqlite3.connect("sensor_setup.db")
-        db_obj.db_config("sensor_setup.db", conn)
-        db_obj.setup_db()
+        self.db_obj.db_config("sensor_setup.db", conn)
+        self.db_obj.setup_db()
         conn.close()
 
-        self.test1 = QLabel()
-        self.test2 = QLabel()
+        layout = QVBoxLayout()
+
+        self.clock_label = QLabel()
+        layout.addWidget(self.clock_label)
+
+        # Create a QWidget for the button container
+        button_container = QWidget()
+        button_container.setObjectName("buttonContainer")
+
+        button_layout = QHBoxLayout(button_container)
+        hour_button = QPushButton("Fetch Hourly Data")
+        hour_button.clicked.connect(self.plot_hour_max)
+        button_layout.addWidget(hour_button)
+
+        day_button = QPushButton("Fetch Daily Data")
+        day_button.clicked.connect(self.plot_day_max)
+        button_layout.addWidget(day_button)
+
+        layout.addWidget(button_container)
+        self.setLayout(layout)
+
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        self.setStyleSheet("""
+            QLabel {
+                color: white;
+                font-size: 18px;
+            }
+            QPushButton {
+                color: white;
+                font-size: 18px;
+                background-color: #444;
+                border: none;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #666;
+            }
+            QWidget#buttonContainer {
+                margin-top: 200px; 
+            }
+        """)
+
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self.update_clock)
+        self.clock_timer.start(1000)  # Update every second
+
         self.bme_var_timer = QTimer(self)
         self.bme_var_timer.timeout.connect(self.collect_bme_worker)
         self.bme_var_timer.start(60000)
 
         self.bme_hour_timer = QTimer(self)
-        self.bme_hour_timer.timeout.connect(self.hour_max_worker)
+        self.bme_hour_timer.timeout.connect(self.plot_hour_max)
         self.bme_hour_timer.start(3600000)
 
         self.bme_day_timer = QTimer(self)
-        self.bme_day_timer.timeout.connect(self.day_max_worker)
+        self.bme_day_timer.timeout.connect(self.plot_day_max)
         self.bme_day_timer.start(86400000)
 
         self.threadpool = QThreadPool()
-        self.setup_widget()
 
-    def setup_widget(self):
-        pass
+    def update_clock(self):
+        current_time = datetime.now().strftime("%H:%M:%S")
+        self.clock_label.setText(f"Current Time: {current_time}")
 
     def collect_bme_worker(self):
-        print("worker started")
         worker = CollectBMEWorker()
-        print(f"Active threads: {self.threadpool.activeThreadCount()}")
-
         worker.signals.result.connect(self.null_method)
         worker.signals.error.connect(self.handle_error)
-        worker.signals.finished.connect(self.finished_thread)
-        self.threadpool.start(worker)
-
-    def hour_max_worker(self):
-        worker = BMEHourMaxWorker()
-        worker.signals.result.connect(self.plot_hour_max)
-        worker.signals.error.connect(self.handle_error)
-        self.threadpool.start(worker)
-
-    def day_max_worker(self):
-        worker = BMEDayMaxWorker()
-        worker.signals.result.connect(self.plot_hour_day)
-        worker.signals.error.connect(self.handle_error)
+        # worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
 
     @Slot(object)
@@ -450,8 +479,8 @@ class BMEDataWidget(QWidget):
 
     @Slot(object)
     def plot_hour_max(self):
-        self.test1.setText("test1")
+        print(f"Hourly: {self.db_obj.fetch_hourly_data()}")
 
     @Slot(object)
     def plot_day_max(self):
-        self.test2.setText("test2")
+        print(f"Daily: {self.db_obj.fetch_daily_data()}")
