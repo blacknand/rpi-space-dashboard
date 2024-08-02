@@ -8,7 +8,7 @@ from custom_widgets import DragonImageWidget, FooterButtonsWidget, BMEDataWidget
 from rocket_launches import RocketLaunchesData
 from nasa_apis import ApodWidget
 from space_news import SpaceNewsAPI
-from workers import RocketLaunchAPIWorker
+from workers import APIWorker
 from datetime import timedelta
 
 
@@ -110,14 +110,14 @@ class MainWidget(QWidget):
         # Create other views
         self.launch_view = LaunchWidget()
         self.apod_view = ApodWidget()
-        self.bme_data_view = BMEDataWidget()
+        # self.bme_data_view = BMEDataWidget()
         self.space_news_view = SpaceNewsWidget()
 
         # Add widgets to QStackedWidget
         self.stacked_widget.addWidget(self.center_grid_widget)
         self.stacked_widget.addWidget(self.launch_view)
         self.stacked_widget.addWidget(self.apod_view)
-        self.stacked_widget.addWidget(self.bme_data_view)
+        # self.stacked_widget.addWidget(self.bme_data_view)
         self.stacked_widget.addWidget(self.space_news_view)
 
         self.setStyleSheet("""
@@ -144,7 +144,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.dragon_button.clicked.connect(self.display_main_widget)
         self.bottom_widget.buttons_widget.fh_button.clicked.connect(self.display_rocket_launches_widget)
         self.bottom_widget.buttons_widget.apod_button.clicked.connect(self.display_apod_widget)
-        self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
+        # self.bottom_widget.buttons_widget.bme_data_button.clicked.connect(self.display_bme_data_widget)
         self.bottom_widget.buttons_widget.spacex_button.clicked.connect(self.display_news_widget)
 
         self.header_widget.setParent(self)
@@ -208,7 +208,7 @@ class MainWidget(QWidget):
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.apod_button)
 
     def display_bme_data_widget(self, event=None):
-        self.stacked_widget.setCurrentWidget(self.bme_data_view)
+        # self.stacked_widget.setCurrentWidget(self.bme_data_view)
         self.header_widget.hide()
         self.bottom_widget.buttons_widget.set_active_button(self.bottom_widget.buttons_widget.bme_data_button)
 
@@ -255,7 +255,7 @@ class LaunchWidget(QWidget):
 
         self.api_timer = QTimer(self)
         self.api_timer.timeout.connect(self.send_api_request)
-        self.api_timer.start(timedelta(minutes=4).total_seconds() * 1000)                          # LL2 API request every 4 minutes to use all 15 requests every hour
+        self.api_timer.start(timedelta(minutes=1).total_seconds() * 1000)                          # LL2 API request every 4 minutes to use all 15 requests every hour
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_launches)
@@ -265,7 +265,8 @@ class LaunchWidget(QWidget):
         self.send_api_request()
 
     def send_api_request(self):
-        worker = RocketLaunchAPIWorker(self.api_url)
+        worker = APIWorker(self.api_url)
+        print(f"Active threads: {self.threadpool.activeThreadCount()}")
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
         # worker.signals.finished.connect(self.finished_thread)
@@ -359,7 +360,9 @@ class SpaceNewsWidget(QWidget):
         self.send_api_request()
 
     def send_api_request(self):
-        worker = RocketLaunchAPIWorker(self.article_url)
+        worker = APIWorker(self.article_url)
+        print(f"Active threads: {self.threadpool.activeThreadCount()}")
+
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
         # worker.signals.finished.connect(self.finished_thread)
@@ -377,26 +380,29 @@ class SpaceNewsWidget(QWidget):
 
         self.news_obj.query_results = result
         self.news_results = self.news_obj.get_filtered_results(type_="article")
-        self.update_news()
+        self.display_news(self.news_results)
 
     @Slot(str)
     def handle_error(self, error):
         print(error)
 
-    def update_news(self):
-        self.display_news(self.news_results)
-
     def display_news(self, news):
-        # Clear existing widgets
-        while self.scroll_layout.count() > 0:
-            widget = self.scroll_layout.takeAt(0).widget()
-            if widget is not None:
-                widget.deleteLater()
-        
-        # Add new news entries
+        # Get the set of currently displayed article URLs
+        displayed_urls = {self.scroll_layout.itemAt(i).widget().news_data['url'] for i in range(self.scroll_layout.count())}
+
+        # Add new news entries if not already displayed
         for news_data in news:
-            news_entry = NewsEntryWidget(news_data, "article", image_cache=self.image_cache)
-            self.scroll_layout.addWidget(news_entry)
+            if news_data['url'] not in displayed_urls:
+                news_entry = NewsEntryWidget(news_data, "article", image_cache=self.image_cache)
+                self.scroll_layout.addWidget(news_entry)
+                displayed_urls.add(news_data['url'])
+
+        # Remove widgets that are already displayed
+        current_news_urls = {nd['url'] for nd in news}
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget.news_data['url'] not in current_news_urls:
+                widget.deleteLater()
 
     def event(self, event):
         if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchUpdate or event.type() == QEvent.TouchEnd:
@@ -408,8 +414,8 @@ if __name__ == "__main__":
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
-    # widget.showFullScreen()
-    widget.resize(800, 480)
+    widget.showFullScreen()
+    # widget.resize(800, 480)
     widget.show()
     sys.exit(app.exec())
  

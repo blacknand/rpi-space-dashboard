@@ -16,8 +16,8 @@ class WorkerSignals(QObject):
         super().__init__()
 
 
-class RocketLaunchAPIWorker(QRunnable):
-    # Handles LL2 API request in seperate thread
+# TODO: Replace all instances with APIWorker instead of current name
+class APIWorker(QRunnable):
     def __init__(self, url):
         super().__init__()
         self.url = url
@@ -26,13 +26,15 @@ class RocketLaunchAPIWorker(QRunnable):
     @Slot()
     def run(self):
         try:
+            print(f"APIWorker thread started @ [{self.url}]")
             response = requests.get(self.url)
             response.raise_for_status()
-            self.signals.result.emit(response.json())  # Emit API response
+            self.signals.result.emit(response.json()) 
         except requests.RequestException as e:
-            self.signals.error.emit(f"Error: {e}\nError querying {self.url}")
+            self.signals.error.emit(f"APIWorker encountered error [{e}] while querying [{self.url}]")
         finally:
             self.signals.finished.emit()
+            print(f"APIWorker thread finished @ [{self.url}]")
             if response:
                 response.close()
 
@@ -45,7 +47,9 @@ class ImageDownloadWorker(QRunnable):
 
     @Slot()
     def run(self):
+        response = None
         try:
+            print(f"ImageDownloadWorker thread started @ [{self.url}]")
             # Headers required for images from Wikimedia
             headers = {'User-Agent': 'RpiSpaceDashboard/0.0 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}
             response = requests.get(self.url, headers=headers)
@@ -53,11 +57,12 @@ class ImageDownloadWorker(QRunnable):
             image_data = response.content
             self.signals.result.emit(image_data)
         except requests.RequestException as e:
-            self.signals.error.emit(f"Error: {e}\nError downloading {self.url}")
+            self.signals.error.emit(f"ImageDownloadWorker encountered error [{e}] while downloading [{self.url}]")
         finally:
             self.signals.finished.emit()
             if response:
                 response.close()
+            print(f"ImageDownloadWorker thread finished @ [{self.url}]")
 
 
 class APODWorker(QRunnable):
@@ -76,7 +81,7 @@ class APODWorker(QRunnable):
             response = json.loads(raw_response)
             self.signals.result.emit(response)
         except requests.RequestException as e:
-            self.signals.error.emit(f"APOD Error: {e}")
+            self.signals.error.emit(f"APODWorker error [{e}]")
         finally:
             self.signals.finished.emit()
 
@@ -94,21 +99,21 @@ class CollectBMEWorker(QRunnable):
             temp = bme_data[0]
             humidity = bme_data[1]
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"temp, humidity type: {type(temp), type(humidity)}")
             if isinstance(temp, float) and isinstance(humidity, float):
                 print("Collecting BME data and storing it in the database")
                 conn = sqlite3.connect("sensor_data.db")
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT INTO sensor.var (timestamp, temp, humidity)
+                    INSERT INTO sensor_var (timestamp, temp, humidity)
                     VALUES (?, ?, ?)
                 """, (timestamp, temp, humidity))
                 conn.commit()
                 cursor.close()
                 conn.close()
-                self.signals.result.emit("Data collected and stored successfully")
+                self.signals.result.emit("BME data collected and stored successfully")
             else:
-                error_message = "BME sensor has fallen off breadboard"
-                print(error_message)
+                error_message = "BME sensor has returned either invalid or no data. Check to see if the sensor has falled off the breadboard."
                 self.signals.error.emit(error_message)
         except Exception as e:
             self.signals.error.emit(str(e))
@@ -127,7 +132,7 @@ class BMEHourMaxWorker(QRunnable):
             conn = sqlite3.connect("sensor_data.db")
             df = pd.read_sql_query("""
                 SELECT *
-                FROM sensor.var
+                FROM sensor_var
             """, conn, parse_dates=["timestamp"])
             last_hour = df[df["timestamp"] > (datetime.now() - timedelta(hours=1))]
             if not last_hour.empty:
@@ -136,7 +141,7 @@ class BMEHourMaxWorker(QRunnable):
                 hour = datetime.now().strftime("%Y-%m-%d %H:00:00")
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT OR REPLACE INTO sensor.hour_max (hour, max_temp, max_humidity)
+                    INSERT OR REPLACE INTO sensor_hour_max (hour, max_temp, max_humidity)
                     VALUES (?, ?, ?)
                 """, (hour, max_temp, max_humidity))
                 conn.commit()
@@ -159,7 +164,7 @@ class BMEDayMaxWorker(QRunnable):
             conn = sqlite3.connect("sensor_data.db")
             df = pd.read_sql_query("""
                 SELECT *
-                FROM sensor.hour_max
+                FROM sensor_hour_max
             """, conn, parse_dates=["hour"])
             last_day = df[df["hour"] > (datetime.now() - timedelta(days=1))]
             if not last_day.empty:
@@ -168,7 +173,7 @@ class BMEDayMaxWorker(QRunnable):
                 day = datetime.now().strftime("%Y-%m-%d")
                 cursor = conn.cursor()
                 cursor.execute("""
-                    INSERT OR REPLACE INTO sensor.day_max (day, max_temp, max_humidity)
+                    INSERT OR REPLACE INTO sensor_day_max (day, max_temp, max_humidity)
                     VALUES (?, ?, ?)
                 """, (day, max_temp, max_humidity))
                 conn.commit()

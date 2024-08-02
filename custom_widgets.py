@@ -248,6 +248,8 @@ class LaunchEntryWidget(QWidget):
     def start_image_download(self, image_url):
         if not self.image_downloaded:
             worker = ImageDownloadWorker(image_url)
+            print(f"Active threads: {self.threadpool.activeThreadCount()}")
+
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
@@ -353,6 +355,8 @@ class NewsEntryWidget(QWidget):
             self.handle_image_download(self.image_cache[image_url])
         else:
             worker = ImageDownloadWorker(image_url)
+            print(f"Active threads: {self.threadpool.activeThreadCount()}")
+
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
@@ -413,6 +417,8 @@ class BMEDataWidget(QWidget):
     def collect_bme_worker(self):
         print("worker started")
         worker = CollectBMEWorker()
+        print(f"Active threads: {self.threadpool.activeThreadCount()}")
+
         worker.signals.result.connect(self.null_method)
         worker.signals.error.connect(self.handle_error)
         worker.signals.finished.connect(self.finished_thread)
