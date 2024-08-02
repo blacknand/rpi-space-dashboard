@@ -408,8 +408,8 @@ if __name__ == "__main__":
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
     widget = MainWidget()
-    widget.showFullScreen()
-    # widget.resize(800, 480)
+    # widget.showFullScreen()
+    widget.resize(800, 480)
     widget.show()
     sys.exit(app.exec())
  

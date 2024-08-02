@@ -392,7 +392,6 @@ class BMEDataWidget(QWidget):
 
         self.test1 = QLabel()
         self.test2 = QLabel()
-
         self.bme_var_timer = QTimer(self)
         self.bme_var_timer.timeout.connect(self.collect_bme_worker)
         self.bme_var_timer.start(60000)
@@ -412,9 +411,11 @@ class BMEDataWidget(QWidget):
         pass
 
     def collect_bme_worker(self):
+        print("worker started")
         worker = CollectBMEWorker()
         worker.signals.result.connect(self.null_method)
         worker.signals.error.connect(self.handle_error)
+        worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
 
     def hour_max_worker(self):
@@ -430,8 +431,12 @@ class BMEDataWidget(QWidget):
         self.threadpool.start(worker)
 
     @Slot(object)
-    def null_method():
-        pass
+    def null_method(self, result):
+        print(result)
+
+    @Slot()
+    def finished_thread():
+        print("thread finished")
 
     @Slot(str)
     def handle_error(self, error):  
