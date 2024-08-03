@@ -1,15 +1,18 @@
 import sqlite3
 import io
-from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion
+import subprocess
+import webbrowser
+import platform
+from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion, QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
-from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool
+from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool, QEvent, QUrl
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
 from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
 from datetime import datetime, date, timezone, timedelta
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from PIL import Image
-from workers import ImageDownloadWorker, CollectBMEWorker,BMEHourMaxWorker, BMEDayMaxWorker
+from workers import ImageDownloadWorker, CollectBMEWorker,BMEHourMaxWorker, BMEDayMaxWorker, ClickableLabel
 from db_operations import DBOperations
 
 
@@ -318,9 +321,10 @@ class NewsEntryWidget(QWidget):
         self.setFixedSize(765, 200)
         self.setObjectName("newsEntryWidget")
 
-        self.image_label = QLabel(self)
-        self.image_label.setGeometry(10, 10, 250, 180) 
+        self.image_label = ClickableLabel(self)
+        self.image_label.setGeometry(10, 10, 250, 180)
         self.image_label.setScaledContents(True)
+        self.image_label.clicked.connect(self.open_url_in_browser)
 
         start_x = 270 + 10
 
@@ -357,6 +361,7 @@ class NewsEntryWidget(QWidget):
         """)
 
         self.threadpool = QThreadPool()
+        self.setAttribute(Qt.WA_AcceptTouchEvents)
         self.start_image_download(news_data["image_url"])
 
     def convert_iso(self, iso_date):
@@ -402,6 +407,13 @@ class NewsEntryWidget(QWidget):
     @Slot(str)
     def handle_error(self, error):
         print(error)
+
+    def open_url_in_browser(self):
+        if platform.system() == "Linux":
+            chrome_path = "/usr/bin/chromium-browser" 
+            subprocess.Popen([chrome_path, '--window-size=780,440', self.news_data["url"]])
+        else:
+            webbrowser.open(self.news_data["url"])
 
 
 class MplCanvas(FigureCanvas):

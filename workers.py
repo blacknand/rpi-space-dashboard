@@ -3,9 +3,11 @@ import sqlite3
 import json
 import os
 import pandas as pd
-from PySide6.QtCore import QRunnable, Signal, QObject, Slot
+from PySide6.QtCore import QRunnable, Signal, QObject, Slot, Qt, QEvent, QTimer
+from PySide6.QtWidgets import QLabel
 from datetime import datetime, timedelta
 from bme280 import bme280_results
+from datetime import datetime
 
 class WorkerSignals(QObject):
     result = Signal(object)
@@ -16,7 +18,35 @@ class WorkerSignals(QObject):
         super().__init__()
 
 
-# TODO: Replace all instances with APIWorker instead of current name
+class ClickableLabel(QLabel):
+    clicked = Signal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setAttribute(Qt.WA_AcceptTouchEvents)
+        self.touch_in_progress = False
+        self.click_timer = QTimer(self)
+        self.click_timer.setSingleShot(True)
+        self.click_timer.timeout.connect(self.emit_click_signal)
+
+    def emit_click_signal(self):
+        self.clicked.emit()
+
+    def event(self, event):
+        if event.type() in (QEvent.TouchBegin, QEvent.TouchUpdate, QEvent.TouchEnd):
+            if event.touchPoints():
+                touch = event.touchPoints()[0]
+                if self.rect().contains(touch.pos().toPoint()):
+                    if event.type() == QEvent.TouchBegin:
+                        self.touch_in_progress = True
+                        self.click_timer.start(100) 
+                    elif event.type() == QEvent.TouchEnd and self.touch_in_progress:
+                        self.touch_in_progress = False
+                        self.emit_click_signal()
+                        return True
+        return super().event(event)
+
+
 class APIWorker(QRunnable):
     def __init__(self, url):
         super().__init__()
