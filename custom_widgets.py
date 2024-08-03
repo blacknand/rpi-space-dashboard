@@ -1,4 +1,5 @@
 import sqlite3
+import io
 from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool
@@ -7,7 +8,8 @@ from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
 from datetime import datetime, date, timezone, timedelta
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from workers import ImageDownloadWorker, CollectBMEWorker
+from PIL import Image
+from workers import ImageDownloadWorker, CollectBMEWorker,BMEHourMaxWorker, BMEDayMaxWorker
 from db_operations import DBOperations
 
 
@@ -259,8 +261,16 @@ class LaunchEntryWidget(QWidget):
     @Slot(object)
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
+
+        # Check if the image data is in WebP format
+        if image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
+            image = Image.open(io.BytesIO(image_data))
+            with io.BytesIO() as output:
+                image.convert("RGB").save(output, format="JPEG")
+                image_data = output.getvalue()
+
         if not pixmap.loadFromData(image_data):
-            self.handle_error(f"LaunchEntryWidget::handle_image_download: Image download failed for [{image_data}]")
+            self.handle_error(f"LaunchEntryWidget::handle_image_download: Image download failed for [{image_data}], image file format most likely not suppoted")
             pixmap = QPixmap("images/nasa_images/saturn-v-default-image.jpg")
             
         target_size = self.image_label.size()
@@ -367,8 +377,16 @@ class NewsEntryWidget(QWidget):
     @Slot(object)
     def handle_image_download(self, image_data):
         pixmap = QPixmap()
+
+        # Check if the image data is in WebP format
+        if image_data[:4] == b'RIFF' and image_data[8:12] == b'WEBP':
+            image = Image.open(io.BytesIO(image_data))
+            with io.BytesIO() as output:
+                image.convert("RGB").save(output, format="JPEG")
+                image_data = output.getvalue()
+
         if not pixmap.loadFromData(image_data):
-            self.handle_error(f"NewsEntryWidget::handle_image_download: Image download failed for [{image_data}]")
+            self.handle_error(f"NewsEntryWidget::handle_image_download: Image download failed for [{image_data[:20]}...{image_data[-5:]}], image file format most likely not supported")
             pixmap = QPixmap("images/nasa_images/lunar-module-eagle-default.jpg")
 
         target_size = QSize(400, 200)
@@ -466,14 +484,18 @@ class BMEDataWidget(QWidget):
         self.bme_var_timer.start(60000)
 
         self.bme_hour_timer = QTimer(self)
-        self.bme_hour_timer.timeout.connect(self.plot_hour_max)
+        self.bme_hour_timer.timeout.connect(self.update_hourly_data)
         self.bme_hour_timer.start(3600000)
 
         self.bme_day_timer = QTimer(self)
-        self.bme_day_timer.timeout.connect(self.plot_day_max)
+        self.bme_day_timer.timeout.connect(self.update_daily_data)
         self.bme_day_timer.start(86400000)
 
         self.threadpool = QThreadPool()
+
+        # Initial plots
+        self.plot_hour_max()
+        self.plot_day_max()
 
     def update_clock(self):
         current_time = datetime.now()
@@ -497,6 +519,20 @@ class BMEDataWidget(QWidget):
         worker = CollectBMEWorker()
         worker.signals.result.connect(self.null_method)
         worker.signals.error.connect(self.handle_error)
+        self.threadpool.start(worker)
+
+    def update_hourly_data(self):
+        worker = BMEHourMaxWorker()
+        worker.signals.result.connect(self.null_method)
+        worker.signals.error.connect(self.handle_error)
+        worker.signals.finished.connect(self.plot_hour_max)
+        self.threadpool.start(worker)
+
+    def update_daily_data(self):
+        worker = BMEDayMaxWorker()
+        worker.signals.result.connect(self.null_method)
+        worker.signals.error.connect(self.handle_error)
+        worker.signals.finished.connect(self.plot_day_max)
         self.threadpool.start(worker)
 
     def clear_hourly_data(self):

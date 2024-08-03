@@ -423,12 +423,15 @@ class RpiInterface:
     def turn_brightness_up(self):
         backlight.brightness = 100
 
+    def run_pending(self):
+        schedule.run_pending()
+
 
 if __name__ == "__main__":
-    backlight = RpiInterface()
-    # Turn screen off at 11 PM and back on at 6 AM
-    schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
-    schedule.every().day.at("23:00").do(backlight.turn_brightness_down)
+    # backlight = RpiInterface()
+    # # Turn screen off at 11 PM and back on at 6 AM
+    # schedule.every().day.at("09:05").do(backlight.turn_brightness_up)
+    # schedule.every().day.at("09:04").do(backlight.turn_brightness_down)
 
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
@@ -436,5 +439,8 @@ if __name__ == "__main__":
     widget.showFullScreen()
     # widget.resize(800, 480)
     widget.show()
+    # timer = QTimer()
+    # timer.timeout.connect(backlight.run_pending)
+    # timer.start(1000)
     sys.exit(app.exec())
  
