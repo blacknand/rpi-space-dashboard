@@ -114,7 +114,7 @@ class TempWidget(BMEDataWidget):
             min_value=-10,
             max_value=50,
             color=QColor(255, 0, 0),
-            start_angle=38,
+            start_angle=55,
             parent=parent
         )
 
@@ -139,7 +139,7 @@ class HumidityWidget(BMEDataWidget):
             min_value=0,
             max_value=100,
             color=QColor(255, 0, 0),
-            start_angle=100,
+            start_angle=77.5,
             parent=parent
         )
 
@@ -162,7 +162,7 @@ class PressureWidget(BMEDataWidget):
             min_value=0,
             max_value=5000,
             color=QColor(255, 0, 0),
-            start_angle=175,
+            start_angle=177.5,
             parent=parent
         )
 

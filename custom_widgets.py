@@ -572,7 +572,7 @@ class BMEDataWidget(QWidget):
         if not hourly_data:
             print("No hourly data available.")
         else:
-            print(f"Hourly: {hourly_data}")
+            # print(f"Hourly: {hourly_data}")
             self.plot_data(self.canvas_hourly, hourly_data, "Hourly Data", "Hour", "Max Temp & Humidity")
 
     @Slot(object)
@@ -581,14 +581,16 @@ class BMEDataWidget(QWidget):
         if not daily_data:
             print("No daily data available.")
         else:
-            print(f"Daily: {daily_data}")
+            # print(f"Daily: {daily_data}")
             self.plot_data(self.canvas_daily, daily_data, "Daily Data", "Day", "Max Temp & Humidity")
 
     def plot_data(self, canvas, data, title, x_label, y_label):
+        # Extract times, temperatures, and humidity from data
         times = [datetime.strptime(entry[0], "%Y-%m-%d %H:%M:%S") for entry in data]
         temps = [entry[1] for entry in data]
         humidity = [entry[2] for entry in data]
-
+        
+        # Plot the data
         canvas.axes.clear()
         canvas.axes.plot(times, temps, label="Max Temperature", marker='o')
         canvas.axes.plot(times, humidity, label="Max Humidity", marker='o')
@@ -598,4 +600,14 @@ class BMEDataWidget(QWidget):
         canvas.axes.legend()
         canvas.axes.grid(True)
         canvas.axes.tick_params(axis='x', rotation=15)
+
+        # Check if the title is "Hourly Data" to modify the X-axis labels
+        if title == "Hourly Data":
+            # Format the times to display only hours (e.g., 8 AM, 9 AM, ..., 8 PM)
+            hour_labels = [time.strftime("%I %p") for time in times]
+            # Set the X-axis to the range of hours
+            canvas.axes.set_xticks(times)
+            canvas.axes.set_xticklabels(hour_labels)
+
         canvas.draw()
+
