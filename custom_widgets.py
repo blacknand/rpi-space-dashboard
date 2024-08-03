@@ -3,6 +3,7 @@ import io
 import subprocess
 import webbrowser
 import platform
+import os
 from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion, QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
 from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool, QEvent, QUrl
@@ -409,11 +410,18 @@ class NewsEntryWidget(QWidget):
         print(error)
 
     def open_url_in_browser(self):
-        if platform.system() == "Linux":
-            chrome_path = "/usr/bin/chromium-browser" 
-            subprocess.Popen([chrome_path, '--window-size=780,440', self.news_data["url"]])
-        else:
-            webbrowser.open(self.news_data["url"])
+        try:
+            if platform.system() == "Linux":
+                chrome_path = "/usr/bin/chromium-browser"
+                # Check if the chromium-browser path is correct and the URL is valid
+                if os.path.isfile(chrome_path) and self.news_data["url"].startswith("http"):
+                    subprocess.Popen([chrome_path, '--new-window', f'--start-fullscreen', self.news_data["url"]])
+                else:
+                    raise ValueError("Invalid URL")
+            else:
+                webbrowser.open(self.news_data["url"])
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 
 class MplCanvas(FigureCanvas):

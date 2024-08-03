@@ -418,12 +418,10 @@ class RpiInterface:
         self.backlight = Backlight()
 
     def turn_brightness_down(self):
-        print('turning brightness down')
         with self.backlight.fade(duration=5):
             self.backlight.brightness = 0
 
     def turn_brightness_up(self):
-        print('turning brightness up')
         self.backlight.brightness = 100
 
     def run_pending(self):
@@ -434,7 +432,7 @@ if __name__ == "__main__":
     backlight = RpiInterface()
     # # Turn screen off at 11 PM and back on at 6 AM
     schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
-    schedule.every().day.at("13:00").do(backlight.turn_brightness_down)
+    schedule.every().day.at("23:45").do(backlight.turn_brightness_down)             # Must change
 
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
