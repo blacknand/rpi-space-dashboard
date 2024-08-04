@@ -2,9 +2,9 @@ import sqlite3
 from datetime import datetime, timedelta
 
 class DBOperations:
-    def db_config(self, filename, conn):
+    def db_config(self, filename, conn, encoding='utf-8'):
         try:
-            with open(filename, 'r') as f:
+            with open(filename, 'r', encoding=encoding) as f:
                 sql_script = f.read()
             
             cursor = conn.cursor()
@@ -14,10 +14,10 @@ class DBOperations:
             print(f"An error occurred while executing the SQL script: {e}")
             raise
 
-    def setup_db(self, filename="sensor_setup.sql"):
+    def setup_db(self, filename="sensor_setup.sql", encoding='utf-8'):
         try:
             conn = sqlite3.connect("sensor_data.db")
-            self.db_config(filename, conn)
+            self.db_config(filename, conn, encoding)
             conn.close()
         except Exception as e:
             print(f"An error occurred while setting up the database: {e}")
@@ -56,3 +56,12 @@ class DBOperations:
         data = cursor.fetchall()
         conn.close()
         return data
+
+    def clear_database(self):
+        conn = sqlite3.connect("sensor_data.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM sensor_var")
+        cursor.execute("DELETE FROM sensor_hour_max")
+        cursor.execute("DELETE FROM sensor_day_max")
+        conn.commit()
+        conn.close()

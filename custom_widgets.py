@@ -438,10 +438,12 @@ class BMEDataWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.db_obj = DBOperations()
-        conn = sqlite3.connect("sensor_setup.db")
-        self.db_obj.db_config("sensor_setup.db", conn)
-        self.db_obj.setup_db()
+        conn = sqlite3.connect("sensor_data.db")
+        self.db_obj.setup_db(filename="sensor_setup.sql", encoding='utf-8')
         conn.close()
+
+        # Clear the database initially to remove old data
+        self.db_obj.clear_database()
 
         self.current_hour = datetime.now().hour
         self.current_day = date.today()
@@ -503,19 +505,32 @@ class BMEDataWidget(QWidget):
         self.bme_var_timer.timeout.connect(self.collect_bme_worker)
         self.bme_var_timer.start(60000)
 
-        self.bme_hour_timer = QTimer(self)
-        self.bme_hour_timer.timeout.connect(self.update_hourly_data)
-        self.bme_hour_timer.start(3600000)
-
-        self.bme_day_timer = QTimer(self)
-        self.bme_day_timer.timeout.connect(self.update_daily_data)
-        self.bme_day_timer.start(86400000)
+        self.schedule_timers()
 
         self.threadpool = QThreadPool()
 
         # Initial plots
         self.plot_hour_max()
         self.plot_day_max()
+
+    def schedule_timers(self):
+        now = datetime.now()
+
+        # Calculate time until next hour on the hour
+        next_hour = (now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+        time_until_next_hour = (next_hour - now).total_seconds() * 1000
+
+        self.bme_hour_timer = QTimer(self)
+        self.bme_hour_timer.timeout.connect(self.update_hourly_data)
+        QTimer.singleShot(time_until_next_hour, lambda: self.bme_hour_timer.start(3600000))
+
+        # Calculate time until midnight
+        next_midnight = (now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1))
+        time_until_midnight = (next_midnight - now).total_seconds() * 1000
+
+        self.bme_day_timer = QTimer(self)
+        self.bme_day_timer.timeout.connect(self.update_daily_data)
+        QTimer.singleShot(time_until_midnight, lambda: self.bme_day_timer.start(86400000))
 
     def update_clock(self):
         current_time = datetime.now()
@@ -549,6 +564,7 @@ class BMEDataWidget(QWidget):
         self.threadpool.start(worker)
 
     def update_daily_data(self):
+        self.clear_hourly_data()  # Clear hourly data at midnight
         worker = BMEDayMaxWorker()
         worker.signals.result.connect(self.null_method)
         worker.signals.error.connect(self.handle_error)
@@ -556,7 +572,7 @@ class BMEDataWidget(QWidget):
         self.threadpool.start(worker)
 
     def clear_hourly_data(self):
-        conn = sqlite3.connect("sensor_setup.db")
+        conn = sqlite3.connect("sensor_data.db")
         cursor = conn.cursor()
         cursor.execute("DELETE FROM sensor_hour_max")
         conn.commit()
@@ -580,7 +596,6 @@ class BMEDataWidget(QWidget):
         if not hourly_data:
             print("No hourly data available.")
         else:
-            # print(f"Hourly: {hourly_data}")
             self.plot_data(self.canvas_hourly, hourly_data, "Hourly Data", "Hour", "Max Temp & Humidity")
 
     @Slot(object)
@@ -589,7 +604,6 @@ class BMEDataWidget(QWidget):
         if not daily_data:
             print("No daily data available.")
         else:
-            # print(f"Daily: {daily_data}")
             self.plot_data(self.canvas_daily, daily_data, "Daily Data", "Day", "Max Temp & Humidity")
 
     def plot_data(self, canvas, data, title, x_label, y_label):
@@ -618,4 +632,5 @@ class BMEDataWidget(QWidget):
             canvas.axes.set_xticklabels(hour_labels)
 
         canvas.draw()
+
 

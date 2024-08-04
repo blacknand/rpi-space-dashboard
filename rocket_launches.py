@@ -17,19 +17,19 @@ class RocketLaunchesData:
             url = self.query_url
         
         try:
-            response = requests.get(url, timeout=30)  
+            response = requests.get(url, timeout=50)  
             response.raise_for_status()
             return response.json()
         except HTTPError as http_err:
             if response.status_code == 524 and retries > 0:
-                print(f"524 Server Error: Retrying ({retries} retries left)...")
+                print(f"RocketLaunchesData::rocket_query_results: 524 Server Error: Retrying ({retries} retries left)...")
                 return self.rocket_query_results(url, retries - 1)
             else:
-                print(f"HTTP error occurred: {http_err}")
+                print(f"RocketLaunchesData::rocket_query_results: HTTP error occurred: {http_err}")
         except Timeout:
-            print("The request timed out")
+            print("RocketLaunchesData::rocket_query_results: The request timed out")
         except Exception as err:
-            print(f"Other error occurred: {err}")
+            print(f"RocketLaunchesData::rocket_query_results: Other error occurred: {err}")
         return None
         
     def json_file_dump(self, file: str) -> None:
