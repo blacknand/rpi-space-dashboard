@@ -14,13 +14,11 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 ![apod-image](https://github.com/user-attachments/assets/780aeac3-6f9a-4199-87f9-d34a96c52156)
 ![apod-explanation](https://github.com/user-attachments/assets/2ebfff22-c123-4918-83db-ec75327ec166)
 ## Enviromental conditions graph display
-**- I have not had the app running for 24 hours yet, so there is no plotting on the graph on the right. Will update within 2 weeks**
+**- TODO: Add image with data on both graphs**
 ![graph-image](https://github.com/user-attachments/assets/5462de5b-c68c-4b56-8535-3a34b6e86c67)
 ## Featured space news articles
 ![space-news-image](https://github.com/user-attachments/assets/0ddd3ad8-b999-46dd-86d7-e146a4371540)
 ![article-image](https://github.com/user-attachments/assets/deb35208-fb63-419f-8daf-1232d53e22eb)
-## Video demonstration
-- TODO
 ## Hardware used
 - [BME280 I2C/SPI](https://learn.adafruit.com/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout/downloads)
 - [Rasberry Pi 4b](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)

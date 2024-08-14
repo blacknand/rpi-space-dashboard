@@ -612,6 +612,8 @@ class BMEDataWidget(QWidget):
         temps = [entry[1] for entry in data]
         humidity = [entry[2] for entry in data]
         
+        # TODO: Make daily plotting actually plot, exactly how hourly plotting is done
+
         # Plot the data
         canvas.axes.clear()
         canvas.axes.plot(times, temps, label="Max Temperature", marker='o')
