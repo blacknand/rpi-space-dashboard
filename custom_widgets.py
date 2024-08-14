@@ -415,7 +415,7 @@ class NewsEntryWidget(QWidget):
                 chrome_path = "/usr/bin/chromium-browser"
                 # Check if the chromium-browser path is correct and the URL is valid
                 if os.path.isfile(chrome_path) and self.news_data["url"].startswith("http"):
-                    subprocess.Popen([chrome_path, '--new-window', f'--start-fullscreen', self.news_data["url"]])
+                    subprocess.Popen([chrome_path, '--new-window', f'--window-size=600,380', self.news_data["url"]])
                 else:
                     raise ValueError("Invalid URL")
             else:
