@@ -432,7 +432,7 @@ if __name__ == "__main__":
     backlight = RpiInterface()
     # # Turn screen off at 11 PM and back on at 6 AM
     schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
-    schedule.every().day.at("23:45").do(backlight.turn_brightness_down)             # Must change
+    schedule.every().day.at("22:00").do(backlight.turn_brightness_down)             # Must change
 
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC

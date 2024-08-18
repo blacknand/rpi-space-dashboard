@@ -124,7 +124,7 @@ class ApodWidget(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.send_apod_request)
-        self.start_timer()
+        # self.start_timer()
 
         self.send_apod_request()
 
@@ -144,19 +144,21 @@ class ApodWidget(QWidget):
 
     def start_timer(self):
         current_time = QTime.currentTime()
-        midnight_et = QTime(0, 0)
-        if current_time < midnight_et:
-            secs_till_midnight = current_time.secsTo(midnight_et)
+        request_et = QTime(5, 0)  # **Send APOD request @ 5 AM instead of midnight**
+        if current_time < request_et:
+            secs_till_request = current_time.secsTo(request_et)
         else:
-            secs_till_midnight = current_time.secsTo(midnight_et) + 86400
+            secs_till_request = current_time.secsTo(request_et) + 86400  # **Calculate time until next 5 AM**
 
-        self.timer.setInterval(secs_till_midnight * 1000)
+        self.timer.setInterval(secs_till_request * 1000)
         self.timer.start()
 
-        QTimer.singleShot(secs_till_midnight * 1000, self.set_daily_timer)
+        # **Trigger first request at the calculated time and set the daily timer afterward**
+        QTimer.singleShot(secs_till_request * 1000, self.set_daily_timer)
 
     def set_daily_timer(self):
-        self.timer.setInterval(86400000)        # 24 hours in milliseconds
+        self.timer.setInterval(86400000)  # **24 hours in milliseconds**
+        self.send_apod_request()  # **Ensure the request is sent as soon as the timer starts**
         self.timer.start()
 
     def send_apod_request(self, date=None):
