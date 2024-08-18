@@ -476,8 +476,8 @@ class BMEDataWidget(QWidget):
         graph_layout.addWidget(self.canvas_hourly)
 
         # Create the second canvas for daily data
-        self.canvas_daily = MplCanvas(self, width=4, height=2, dpi=100)
-        graph_layout.addWidget(self.canvas_daily)
+        # self.canvas_daily = MplCanvas(self, width=4, height=2, dpi=100)
+        # graph_layout.addWidget(self.canvas_daily)
 
         graph_widget = QWidget()
         graph_widget.setLayout(graph_layout)
@@ -511,7 +511,7 @@ class BMEDataWidget(QWidget):
 
         # Initial plots
         self.plot_hour_max()
-        self.plot_day_max()
+        # self.plot_day_max()
 
     def schedule_timers(self):
         now = datetime.now()
@@ -525,12 +525,12 @@ class BMEDataWidget(QWidget):
         QTimer.singleShot(time_until_next_hour, lambda: self.bme_hour_timer.start(3600000))
 
         # Calculate time until midnight
-        next_midnight = (now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1))
-        time_until_midnight = (next_midnight - now).total_seconds() * 1000
+        # next_midnight = (now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1))
+        # time_until_midnight = (next_midnight - now).total_seconds() * 1000
 
-        self.bme_day_timer = QTimer(self)
-        self.bme_day_timer.timeout.connect(self.update_daily_data)
-        QTimer.singleShot(time_until_midnight, lambda: self.bme_day_timer.start(86400000))
+        # self.bme_day_timer = QTimer(self)
+        # self.bme_day_timer.timeout.connect(self.update_daily_data)
+        # QTimer.singleShot(time_until_midnight, lambda: self.bme_day_timer.start(86400000))
 
     def update_clock(self):
         current_time = datetime.now()
@@ -548,7 +548,7 @@ class BMEDataWidget(QWidget):
         if today != self.current_day:
             self.current_day = today
             self.clear_hourly_data() 
-            self.plot_day_max()
+            # self.plot_day_max()
 
     def collect_bme_worker(self):
         worker = CollectBMEWorker()
@@ -563,13 +563,13 @@ class BMEDataWidget(QWidget):
         worker.signals.finished.connect(self.plot_hour_max)
         self.threadpool.start(worker)
 
-    def update_daily_data(self):
-        self.clear_hourly_data()  # Clear hourly data at midnight
-        worker = BMEDayMaxWorker()
-        worker.signals.result.connect(self.null_method)
-        worker.signals.error.connect(self.handle_error)
-        worker.signals.finished.connect(self.plot_day_max)
-        self.threadpool.start(worker)
+    # def update_daily_data(self):
+    #     self.clear_hourly_data()  # Clear hourly data at midnight
+    #     worker = BMEDayMaxWorker()
+    #     worker.signals.result.connect(self.null_method)
+    #     worker.signals.error.connect(self.handle_error)
+    #     worker.signals.finished.connect(self.plot_day_max)
+    #     self.threadpool.start(worker)
 
     def clear_hourly_data(self):
         conn = sqlite3.connect("sensor_data.db")
@@ -598,13 +598,13 @@ class BMEDataWidget(QWidget):
         else:
             self.plot_data(self.canvas_hourly, hourly_data, "Hourly Data", "Hour", "Max Temp & Humidity")
 
-    @Slot(object)
-    def plot_day_max(self):
-        daily_data = self.db_obj.fetch_daily_data()
-        if not daily_data:
-            print("No daily data available.")
-        else:
-            self.plot_data(self.canvas_daily, daily_data, "Daily Data", "Day", "Max Temp & Humidity")
+    # @Slot(object)
+    # def plot_day_max(self):
+    #     daily_data = self.db_obj.fetch_daily_data()
+    #     if not daily_data:
+    #         print("No daily data available.")
+    #     else:
+    #         self.plot_data(self.canvas_daily, daily_data, "Daily Data", "Day", "Max Temp & Humidity")
 
     def plot_data(self, canvas, data, title, x_label, y_label):
         # Extract times, temperatures, and humidity from data
@@ -612,7 +612,7 @@ class BMEDataWidget(QWidget):
         temps = [entry[1] for entry in data]
         humidity = [entry[2] for entry in data]
         
-        # TODO: Make daily plotting actually plot, exactly how hourly plotting is done
+        # TODO NOTE: In the future, add in the daily plotting max temperature functionality
 
         # Plot the data
         canvas.axes.clear()

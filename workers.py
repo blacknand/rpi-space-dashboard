@@ -56,7 +56,7 @@ class APIWorker(QRunnable):
     @Slot()
     def run(self):
         try:
-            # print(f"APIWorker thread started @ [{self.url}]")
+            print(f"APIWorker thread started @ [{self.url}]")
             response = requests.get(self.url)
             response.raise_for_status()
             self.signals.result.emit(response.json()) 
@@ -64,7 +64,7 @@ class APIWorker(QRunnable):
             self.signals.error.emit(f"APIWorker encountered error [{e}] while querying [{self.url}]")
         finally:
             self.signals.finished.emit()
-            # print(f"APIWorker thread finished @ [{self.url}]")
+            print(f"APIWorker thread finished @ [{self.url}]")
             if response:
                 response.close()
 
@@ -82,6 +82,7 @@ class ImageDownloadWorker(QRunnable):
             # print(f"ImageDownloadWorker thread started @ [{self.url}]")
             # Headers required for images from Wikimedia
             headers = {'User-Agent': 'RpiSpaceDashboard/0.0 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}
+            print(f"downloading image from [{self.url[:50]}] (first 50 chars)")
             response = requests.get(self.url, headers=headers)
             response.raise_for_status()
             image_data = response.content
@@ -107,6 +108,7 @@ class APODWorker(QRunnable):
             url = f'https://api.nasa.gov/planetary/apod?api_key={os.environ.get("nasa_key")}'
             if self.date:
                 url += f"&date={self.date}"
+            print(f"sending APOD API request with [{url}]")
             raw_response = requests.get(url).text
             response = json.loads(raw_response)
             self.signals.result.emit(response)
