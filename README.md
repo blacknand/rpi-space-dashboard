@@ -11,8 +11,8 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 ## Upcoming rocket launches display
 ![rockets-img](https://github.com/user-attachments/assets/2580a81f-7ad7-4794-b00a-b7dc30ab30b8)
 ## NASA APOD display
-![20240830_10h46m23s_grim](https://github.com/user-attachments/assets/13076d6a-3e42-4598-9447-b31316ea0e26)
-![20240830_10h46m27s_grim](https://github.com/user-attachments/assets/b91a0777-ba53-4890-a438-c2cfec060f31)
+![20240830_10h46m23s_grim (2)](https://github.com/user-attachments/assets/0943dfb0-3a94-4304-8089-9b8da13f44f3)
+![20240830_10h46m27s_grim](https://github.com/user-attachments/assets/d650552f-7391-4954-9d2d-e315e1fc00b4)
 ## Enviromental conditions graph display
 ![20240823_17h16m52s_grim](https://github.com/user-attachments/assets/e4afecc1-b9ca-460e-822b-2ffa08831719)
 ## Featured space news articles
