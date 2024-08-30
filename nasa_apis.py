@@ -9,7 +9,7 @@ from custom_widgets import ImageDownloadWorker
 from PySide6.QtCore import Slot, QThreadPool, QTimer, QTime, Qt
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QStackedLayout, QSizePolicy
 from PySide6.QtGui import QPixmap
-from workers import APODWorker
+from workers import APODWorker, MockedTime
 
 load_dotenv("keys.env")
 
@@ -74,6 +74,7 @@ class ApodWidget(QWidget):
         self.apod_download = False
         self.current_date = datetime.today()
         self.apod_date = None
+        self.last_apod_date = None
 
         self.apod_label = QLabel(self)
         self.apod_label.setScaledContents(False)
@@ -122,11 +123,11 @@ class ApodWidget(QWidget):
 
         self.threadpool = QThreadPool()
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.send_apod_request)
-        # self.start_timer()
-
+        print("sending initial APOD request")
         self.send_apod_request()
+
+        self.timer = QTimer(self)
+        self.start_timer()
 
         self.apod_popup_widget = APODPopUpWidget()
 
@@ -142,30 +143,49 @@ class ApodWidget(QWidget):
         if pixmap:
             self.apod_label.setPixmap(pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
+    def test_img(self):
+        print("test_img HAS EXECUTED **************************************")
+        test_pixmap = QPixmap("images/nasa_images/saturn-v-default-image.jpg")
+        self.apod_label.setPixmap(test_pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
     def start_timer(self):
-        current_time = QTime.currentTime()
-        request_et = QTime(5, 0)  # **Send APOD request @ 5 AM instead of midnight**
-        if current_time < request_et:
-            secs_till_request = current_time.secsTo(request_et)
+        # current_time = datetime.now().replace(hour=23, minute=0, second=0, microsecond=0)
+        current_time = datetime.now()
+        request_time = current_time.replace(hour=5, minute=30, second=0, microsecond=0)  
+
+        if current_time < request_time:
+            secs_till_request = (request_time - current_time).total_seconds()
         else:
-            secs_till_request = current_time.secsTo(request_et) + 86400  # **Calculate time until next 5 AM**
+            # If it's already past 5:30 AM, calculate time until 5:30 AM the next day
+            next_request_time = request_time + timedelta(days=1)
+            secs_till_request = (next_request_time - current_time).total_seconds()
 
-        self.timer.setInterval(secs_till_request * 1000)
+                # For testing: Reduce the interval to 60 seconds
+        # if secs_till_request > 60:
+        #     print(f"Reducing wait time for testing.")
+        #     secs_till_request = 60  # Set to 60 seconds for quicker testing
+
+        print(f"Current time: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Next APOD request scheduled in: {int(secs_till_request)} seconds")
+
+        self.timer.setInterval(int(secs_till_request * 1000))
+        self.timer.timeout.connect(self.send_daily_apod_request)
         self.timer.start()
 
-        # **Trigger first request at the calculated time and set the daily timer afterward**
-        QTimer.singleShot(secs_till_request * 1000, self.set_daily_timer)
-
-    def set_daily_timer(self):
-        self.timer.setInterval(86400000)  # **24 hours in milliseconds**
-        self.send_apod_request()  # **Ensure the request is sent as soon as the timer starts**
-        self.timer.start()
+    def send_daily_apod_request(self):
+        # Send the APOD request
+        print("sending APOD request from send_daily_apod_request")
+        self.send_apod_request()
+        # After the first request, switch to a 24-hour interval
+        print("switching to 24 hour timer interval (actually 1 hour)")
+        self.start_timer()
 
     def send_apod_request(self, date=None):
         if date:
             date_str = date.strftime('%Y-%m-%d')
         else:
             date_str = None
+        print("setting up APOD worker")
         worker = APODWorker(date_str)
         worker.signals.result.connect(self.handle_apod_response)
         worker.signals.error.connect(self.handle_error)
@@ -177,6 +197,7 @@ class ApodWidget(QWidget):
             print(response)
             return
         
+        print(f"APOD response: {response}")
         self.apod_title = apod_object_parser.get_title(response)
         self.apod_explaination = apod_object_parser.get_explaination(response)
         self.apod_url = apod_object_parser.get_url(response)
@@ -189,6 +210,9 @@ class ApodWidget(QWidget):
             self.fetch_previous_image_apod()
 
     def fetch_previous_image_apod(self):
+        if self.current_date <= datetime(1995, 6, 16):  # APOD started from June 16, 1995
+            print("No valid image found in recent days.")
+            return
         self.current_date -= timedelta(days=1)
         self.send_apod_request(self.current_date)
 
@@ -197,18 +221,29 @@ class ApodWidget(QWidget):
         print(error)
 
     def start_apod_download(self, apod_url):
-        if not self.apod_download:
+        # Only download if today's APOD hasn't been downloaded
+        if self.apod_date != self.last_apod_date:
+            print("setting up APOD image download worker")
+            self.last_apod_date = self.apod_date 
             worker = ImageDownloadWorker(apod_url)
             worker.signals.result.connect(self.handle_apod_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
+        else:
+            print("APOD image already downloaded for today.")
 
     @Slot(object)
     def handle_apod_download(self, raw_data):
+        if raw_data is None:
+            print("Image download failed.")
+            return
         pixmap = QPixmap()
-        pixmap.loadFromData(raw_data)
+        if not pixmap.loadFromData(raw_data):
+            print("Failed to load image from data.")
+            return
         self.apod_label.setPixmap(pixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.apod_download = True
+
 
     def show_apod_popup(self):
         if self.apod_title and self.apod_explaination:

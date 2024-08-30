@@ -509,10 +509,6 @@ class BMEDataWidget(QWidget):
 
         self.threadpool = QThreadPool()
 
-        # Initial plots
-        self.plot_hour_max()
-        # self.plot_day_max()
-
     def schedule_timers(self):
         now = datetime.now()
 
@@ -547,7 +543,7 @@ class BMEDataWidget(QWidget):
         # Check if a new day has started
         if today != self.current_day:
             self.current_day = today
-            self.clear_hourly_data() 
+            self.clear_db()                             # Clear database at end of day to keep db size as small as possible
             # self.plot_day_max()
 
     def collect_bme_worker(self):
@@ -574,6 +570,14 @@ class BMEDataWidget(QWidget):
     def clear_hourly_data(self):
         conn = sqlite3.connect("sensor_data.db")
         cursor = conn.cursor()
+        cursor.execute("DELETE FROM sensor_hour_max")
+        conn.commit()
+        conn.close()
+
+    def clear_db(self):
+        conn = sqlite3.connect("sensor_data.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM sensor_var")
         cursor.execute("DELETE FROM sensor_hour_max")
         conn.commit()
         conn.close()
@@ -612,8 +616,6 @@ class BMEDataWidget(QWidget):
         temps = [entry[1] for entry in data]
         humidity = [entry[2] for entry in data]
         
-        # TODO NOTE: In the future, add in the daily plotting max temperature functionality
-
         # Plot the data
         canvas.axes.clear()
         canvas.axes.plot(times, temps, label="Max Temperature", marker='o')
@@ -625,7 +627,6 @@ class BMEDataWidget(QWidget):
         canvas.axes.grid(True)
         canvas.axes.tick_params(axis='x', rotation=15)
 
-        # Check if the title is "Hourly Data" to modify the X-axis labels
         if title == "Hourly Data":
             # Format the times to display only hours (e.g., 8 AM, 9 AM, ..., 8 PM)
             hour_labels = [time.strftime("%I %p") for time in times]

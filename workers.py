@@ -3,11 +3,12 @@ import sqlite3
 import json
 import os
 import pandas as pd
-from PySide6.QtCore import QRunnable, Signal, QObject, Slot, Qt, QEvent, QTimer
+from PySide6.QtCore import QRunnable, Signal, QObject, Slot, Qt, QEvent, QTimer, QTime
 from PySide6.QtWidgets import QLabel
 from datetime import datetime, timedelta
 from bme280 import bme280_results
 from datetime import datetime
+
 
 class WorkerSignals(QObject):
     result = Signal(object)
@@ -215,3 +216,14 @@ class BMEDayMaxWorker(QRunnable):
             self.signals.result.emit()
 # ---------- BME temperature and humidity workers ---------- #
     
+
+# For testing
+class MockedTime:
+    def __init__(self, mocked_date):
+        self.mocked_date = mocked_date
+
+    def current_time(self):
+        return QTime(self.mocked_date.hour, self.mocked_date.minute, self.mocked_date.second)
+
+    def current_date(self):
+        return self.mocked_date
