@@ -3,7 +3,7 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 ## Features
 - Main dashboard: has the same theme as the real dashboard inside of Dragon, showing the temperature, humidity, barometric pressure and dew point of the room. Also displays current date and time
 - Upcoming rocket launches: displays a list of 10 upcoming rocket launches including the rocket launch time to T+ 15 minutes, the mission, the LSP and launch site
-- NASA APOD: displays the Astronomoy Picture of the Day from NASA with current time
+- NASA APOD: displays the Astronomoy Picture of the Day from NASA
 - Enviromental conditions dynamic graph: displays a graph for the highest temperature and humidity percentage for each hour, for 12 hours on the current day from 8 AM to 8 PM. The graph is updated dynamically every hour and then cleared at 12 AM
 - Featured space news articles: displays a list of 10 featured space articles with the title, publisher, date of publishing, a brief summary and a image which you can touch to bring up the article
 ## Main display
