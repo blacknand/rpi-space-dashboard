@@ -24,13 +24,13 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 - [Rasberry Pi 7 inch touchscreen display](https://www.raspberrypi.com/products/raspberry-pi-touch-display/)
 # To install
 SSH:
-```git clone git@github.com:blacknand/rpi-space-dashboard.git```
+```git clone git@github.com:blacknand/rpi-space-dashboard.git``` <br\>
 HTTP: 
-```git clone https://github.com/blacknand/rpi-space-dashboard.git```
+```git clone https://github.com/blacknand/rpi-space-dashboard.git``` <br\>
 Install all dependencies
-```pip install -r requirements.txt```
+```pip install -r requirements.txt``` <br\>
 **Run app**
-Linux/macOS:
-```python3 interface.py```
-Windows:
-```python interface.py```
+- Linux/macOS:
+-- ```python3 interface.py``` <br\>
+- Windows:
+-- ```python interface.py```
