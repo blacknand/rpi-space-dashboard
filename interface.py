@@ -327,16 +327,19 @@ class SpaceNewsWidget(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
+        # Scroll Area Setup
         self.scroll_area = QScrollArea(self)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         QScroller.grabGesture(self.scroll_area.viewport(), QScroller.LeftMouseButtonGesture)  # Enable kinetic scrolling
 
+        # Scrollable content area setup
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
         self.scroll_area.setWidget(self.scroll_content)
 
+        # Add scroll area to the main layout
         self.layout.addWidget(self.scroll_area)
 
         self.setFixedHeight(425)
@@ -347,6 +350,7 @@ class SpaceNewsWidget(QWidget):
             }
         """)
 
+        # Space News API configuration
         self.article_url = "https://api.spaceflightnewsapi.net/v4/articles?limit=10&is_feature=true"
         self.report_url = "https://api.spaceflightnewsapi.net/v4/reports?limit=10"
 
@@ -355,25 +359,20 @@ class SpaceNewsWidget(QWidget):
 
         self.image_cache = {}
 
+        # Set up API refresh timer
         self.api_timer = QTimer(self)
         self.api_timer.timeout.connect(self.send_api_request)
         self.api_timer.start(timedelta(hours=1).total_seconds() * 1000)
 
+        # Thread pool for API request
         self.threadpool = QThreadPool()
         self.send_api_request()
 
     def send_api_request(self):
         worker = APIWorker(self.article_url)
-        # print(f"Active threads: {self.threadpool.activeThreadCount()}")
-
         worker.signals.result.connect(self.handle_api_response)
         worker.signals.error.connect(self.handle_error)
-        # worker.signals.finished.connect(self.finished_thread)
         self.threadpool.start(worker)
-
-    @Slot()
-    def finished_thread(self):
-        print("thread finished")
 
     @Slot(object)
     def handle_api_response(self, result):
@@ -400,7 +399,7 @@ class SpaceNewsWidget(QWidget):
                 self.scroll_layout.addWidget(news_entry)
                 displayed_urls.add(news_data['url'])
 
-        # Remove widgets that are already displayed
+        # Remove widgets that are no longer needed
         current_news_urls = {nd['url'] for nd in news}
         for i in reversed(range(self.scroll_layout.count())):
             widget = self.scroll_layout.itemAt(i).widget()
@@ -411,6 +410,7 @@ class SpaceNewsWidget(QWidget):
         if event.type() == QEvent.TouchBegin or event.type() == QEvent.TouchUpdate or event.type() == QEvent.TouchEnd:
             return self.scroll_area.event(event)
         return super().event(event)
+
 
 
 class RpiInterface:

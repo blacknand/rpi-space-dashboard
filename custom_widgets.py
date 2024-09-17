@@ -231,27 +231,27 @@ class LaunchEntryWidget(QWidget):
         self.name.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.name)
         self.lsp = QLabel(launch_data["lsp_name"])
-        self.lsp.setFont(QFont("Arial", 14, QFont.Bold))
+        self.lsp.setFont(QFont("Arial", 14))
         self.lsp.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.lsp)
         self.location = QLabel(launch_data['location'])
-        self.location.setFont(QFont("Arial", 14, QFont.Bold))
+        self.location.setFont(QFont("Arial", 14))
         self.location.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.location)
         self.pad = QLabel(launch_data['pad'])
-        self.pad.setFont(QFont("Arial", 14, QFont.Bold))
+        self.pad.setFont(QFont("Arial", 14))
         self.pad.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.info_layout.addWidget(self.pad)
         self.mission = QLabel(launch_data["mission_type"])
-        self.mission.setFont(QFont("Arial", 14, QFont.Bold))
+        self.mission.setFont(QFont("Arial", 14))
         self.mission.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.mission)
         self.countdown_label = QLabel()
-        self.countdown_label.setFont(QFont('Arial', 14, QFont.Bold))
+        self.countdown_label.setFont(QFont('Arial', 14))
         self.countdown_label.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.countdown_label)
         self.time_data = QLabel(f"{launch_data['net']} | {launch_data['status']}")
-        self.time_data.setFont(QFont("Arial", 14, QFont.Bold))
+        self.time_data.setFont(QFont("Arial", 14))
         self.time_data.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.time_data)
 
@@ -359,32 +359,32 @@ class NewsEntryWidget(QWidget):
         published_date = self.convert_iso(news_data["published"])
         self.published = QLabel(published_date, self)
         self.published.setGeometry(start_x, 10, 200, 20)  
-        self.published.setStyleSheet("color: white; font-size: 12px;")
+        self.published.setStyleSheet("color: black; font-size: 12px;")
 
         self.news_site = QLabel(news_data["news_site"], self)
         self.news_site.setGeometry(540, 10, 200, 20)  
-        self.news_site.setStyleSheet("color: white; font-size: 12px;")
+        self.news_site.setStyleSheet("color: black; font-size: 12px;")
         self.news_site.setAlignment(Qt.AlignRight)
 
         self.title = QLabel(news_data["title"], self)
         self.title.setGeometry(start_x, 40, 475, 40)  
-        self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
+        self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setWordWrap(True)
 
         self.summary = QLabel(news_data["summary"], self)
         self.summary.setGeometry(start_x, 90, 475, 100)  
-        self.summary.setStyleSheet("font-size: 14px; color: white;")
+        self.summary.setStyleSheet("font-size: 14px; color: black;")
         self.summary.setWordWrap(True)
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget#newsEntryWidget {
-                background-color: #2E2D4D; 
+                background-color: #FFF; 
                 border-radius: 5%;
             }
             QWidget {
-                background-color: #2E2D4D; 
+                background-color: #FFF; 
             }
         """)
 
