@@ -4,11 +4,10 @@ import subprocess
 import webbrowser
 import platform
 import os
-from PySide6.QtGui import QPixmap, QColor, QPainter, QIcon, QRegion, QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsDropShadowEffect, QVBoxLayout, QSpacerItem, QSizePolicy, QPushButton
-from PySide6.QtCore import Qt, QTimer, QRectF, QSize, QPoint, Slot, QThreadPool, QEvent, QUrl
+from PySide6.QtCore import Qt, QTimer, QRectF, QSize, Slot, QThreadPool, QPointF, QRect
 from PySide6.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QGraphicsPixmapItem, QVBoxLayout, QGraphicsDropShadowEffect
-from PySide6.QtGui import QPixmap, QColor, QFont, QPolygon
+from PySide6.QtGui import QPixmap, QColor, QFont, QPainterPath, QPolygon, QPainter, QIcon, QRegion
 from datetime import datetime, date, timezone, timedelta
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -154,34 +153,63 @@ class FooterButtonsWidget(QWidget):
     def paintEvent(self, event):
         super().paintEvent(event)
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
 
-        # Define the downward sloped trapezoid shape
+        # Define the width, height, and radius for the top corners
         width = self.width()
         height = self.height()
-        trapezoid = QPolygon([
-            QPoint(20, 0),
-            QPoint(width - 20, 0),
-            QPoint(width, height),
-            QPoint(0, height)
-        ])
+        radius = 15  # Radius for the top corners only
 
-        # Set the brush to black and draw the trapezoid
-        painter.setBrush(QColor("#002B5A"))
-        painter.setPen(Qt.NoPen)                # Remove the border
-        painter.drawPolygon(trapezoid)
+        # Create a QPainterPath for the custom shape
+        path = QPainterPath()
+
+        # Start with a rounded top-left corner
+        path.moveTo(radius, 0)
+        path.quadTo(0, 0, 0, radius)  # Top-left curve
+
+        # Left side going down straight
+        path.lineTo(0, height)
+
+        # Bottom side straight
+        path.lineTo(width, height)
+
+        # Right side going up straight
+        path.lineTo(width, radius)
+
+        # Top-right curve
+        path.quadTo(width, 0, width - radius, 0)
+
+        # Close the path
+        path.closeSubpath()
+
+        # Set the brush to the desired color and draw the custom shape
+        painter.setBrush(QColor("#EAEAEA"))
+        painter.setPen(Qt.NoPen)  # Remove the border
+        painter.drawPath(path)
 
         # Apply the shape to the widget
-        region = QRegion(trapezoid)
+        region = QRegion(path.toFillPolygon().toPolygon())
         self.setMask(region)
 
         # Draw the line under the active button
         if self.current_button:
             button_rect = self.current_button.geometry()
-            line_y = button_rect.bottom() + 5               # Position the line just below the button
-            painter.setPen(QColor("white"))
+            line_y = button_rect.bottom() + 5  # Position the line just below the button
+            painter.setPen(QColor("black"))
             painter.drawLine(button_rect.left(), line_y, button_rect.right(), line_y)
-            
 
+        # End the painting process
+        painter.end()
+
+
+
+
+
+
+
+
+
+            
 class LaunchEntryWidget(QWidget):
     def __init__(self, launch_data):
         super().__init__()
@@ -222,7 +250,6 @@ class LaunchEntryWidget(QWidget):
         self.countdown_label.setFont(QFont('Arial', 14, QFont.Bold))
         self.countdown_label.setAlignment(Qt.AlignmentFlag.AlignCenter) 
         self.info_layout.addWidget(self.countdown_label)
-        self.update_countdown()
         self.time_data = QLabel(f"{launch_data['net']} | {launch_data['status']}")
         self.time_data.setFont(QFont("Arial", 14, QFont.Bold))
         self.time_data.setAlignment(Qt.AlignmentFlag.AlignCenter) 
@@ -231,11 +258,11 @@ class LaunchEntryWidget(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget {
-                background-color: #2E2D4D;
+                background-color: white;
                 border-radius: 5%;  
             }
             QLabel {
-                color: white;
+                color: black;
             }
 
         """)

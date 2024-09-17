@@ -76,7 +76,7 @@ class BottomWidget(QWidget):
         layout_h = QHBoxLayout()
         layout.addLayout(layout_h)  
 
-        self.eject_button = QPushButton("EJECT", self)
+        self.eject_button = QPushButton("ABORT", self)
         self.eject_button.setStyleSheet(
             "background-color: white; border: 2px solid white; padding: 10px; border-radius: 7.5px; width: 100px;"
         )
