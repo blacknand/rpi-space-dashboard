@@ -334,10 +334,31 @@ class LaunchEntryWidget(QWidget):
                                     hours=countdown_dict['hours'],
                                     minutes=countdown_dict['minutes'],
                                     seconds=countdown_dict['seconds'])
-        time_diff = datetime.now(timezone.utc) - countdown_delta
-        sign = "T+" if datetime.now(timezone.utc) < time_diff else "T-"
-        countdown_text = f"{sign} {countdown_dict['days']:02d} : {countdown_dict['hours']:02d} : {countdown_dict['minutes']:02d} : {countdown_dict['seconds']:02d}"
+        
+        launch_time = datetime.now(timezone.utc) + countdown_delta
+        current_time = datetime.now(timezone.utc)
+        
+        # Calculate time difference
+        time_diff = launch_time - current_time
+
+        # Determine sign: T- before launch, T+ if it's within 15 minutes after launch
+        if time_diff.total_seconds() > 0:
+            sign = "T-"
+        elif -time_diff.total_seconds() <= 15 * 60:
+            sign = "T+"
+        else:
+            sign = "T+"
+
+        # Calculate the absolute remaining time for display
+        abs_time_diff = abs(time_diff)
+        days = abs_time_diff.days
+        hours, remainder = divmod(abs_time_diff.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        # Update the countdown display
+        countdown_text = f"{sign} {days:02d} : {hours:02d} : {minutes:02d} : {seconds:02d}"
         self.countdown_label.setText(countdown_text)
+
 
 
 class NewsEntryWidget(QWidget):
