@@ -11,7 +11,7 @@ from custom_widgets import DragonImageWidget, FooterButtonsWidget, BMEDataWidget
 from rocket_launches import RocketLaunchesData
 from nasa_apis import ApodWidget
 from space_news import SpaceNewsAPI
-from workers import APIWorker
+from workers import APIWorker, RpiInterfaceWorker
 from datetime import timedelta
 
 
@@ -415,15 +415,23 @@ class SpaceNewsWidget(QWidget):
 
 class RpiInterface:
     def __init__(self):
+        self.threadpool = QThreadPool()
         self.backlight = Backlight()
 
-    def turn_brightness_down(self):
-        with self.backlight.fade(duration=5):
-            self.backlight.brightness = 0
+    def adjust_brightness(self, screen_status):
+        worker = RpiInterfaceWorker(screen_status=screen_status)
+        worker.signals.finsihed.connect(self.worker_finished)
+        self.threadpool.start()
 
     def turn_brightness_up(self):
-        self.backlight.brightness = 100
-
+        self.adjust_brightness(screen_status=True)
+    
+    def turn_brightness_down(self):
+        self.adjust_brightness(screen_status=False)
+    
+    def worker_finished(self):
+        print("RpiInterface worker finished")
+    
     def run_pending(self):
         schedule.run_pending()
 

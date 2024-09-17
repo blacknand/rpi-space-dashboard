@@ -5,6 +5,7 @@ import os
 import pandas as pd
 from PySide6.QtCore import QRunnable, Signal, QObject, Slot, Qt, QEvent, QTimer, QTime
 from PySide6.QtWidgets import QLabel
+from rpi_backlight import Backlight
 from datetime import datetime, timedelta
 from bme280 import bme280_results
 from datetime import datetime
@@ -117,6 +118,30 @@ class APODWorker(QRunnable):
             self.signals.error.emit(f"APODWorker error [{e}]")
         finally:
             self.signals.finished.emit()
+
+
+class RpiInterfaceWorker(QRunnable):
+    def __init__(self, screen_status=None):
+        super().__init__()
+        self.signals = WorkerSignals()
+        self.backlight = Backlight()
+        self.screen_status = screen_status
+
+    def turn_brightness_down(self):
+        self.backlight.brightness = 0
+
+    def turn_brightness_up(self):
+        self.backlight.brightness = 100
+
+    @Slot()
+    def run(self):
+        if self.screen_status == True:
+            print("Turning screen brightness down to 0")
+            self.backlight.brightness = 0
+        else:
+            print("Turning screen brightness back up to 100")
+            self.backlight.brightness = 100
+        self.signals.finished.emit()
 
 
 # ---------- BME temperature and humidity workers ---------- #
