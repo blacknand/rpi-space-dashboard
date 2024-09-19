@@ -359,37 +359,52 @@ class NewsEntryWidget(QWidget):
         self.news_data = news_data
         self.image_cache = image_cache
 
-        self.setFixedSize(765, 200)
-        self.setObjectName("newsEntryWidget")
+        # Main layout for the widget
+        main_layout = QHBoxLayout(self)
+        self.setLayout(main_layout)
 
+        # Image label setup
         self.image_label = ClickableLabel(self)
-        self.image_label.setGeometry(10, 10, 250, 180)
+        self.image_label.setFixedSize(250, 180)
         self.image_label.setScaledContents(True)
         self.image_label.clicked.connect(self.open_url_in_browser)
 
-        start_x = 270 + 10
+        main_layout.addWidget(self.image_label)
 
+        # Info layout setup for text
+        text_layout = QVBoxLayout()
+        main_layout.addLayout(text_layout)
+
+        # Published date label
         published_date = self.convert_iso(news_data["published"])
         self.published = QLabel(published_date, self)
-        self.published.setGeometry(start_x, 10, 200, 20)  
         self.published.setStyleSheet("color: black; font-size: 12px;")
+        text_layout.addWidget(self.published)
 
+        # News site label
         self.news_site = QLabel(news_data["news_site"], self)
-        self.news_site.setGeometry(540, 10, 200, 20)  
         self.news_site.setStyleSheet("color: black; font-size: 12px;")
         self.news_site.setAlignment(Qt.AlignRight)
+        text_layout.addWidget(self.news_site)
 
+        # Title label
         self.title = QLabel(news_data["title"], self)
-        self.title.setGeometry(start_x, 40, 475, 40)  
         self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setWordWrap(True)
+        text_layout.addWidget(self.title)
 
+        # Summary label
         self.summary = QLabel(news_data["summary"], self)
-        self.summary.setGeometry(start_x, 90, 475, 100)  
         self.summary.setStyleSheet("font-size: 14px; color: black;")
         self.summary.setWordWrap(True)
+        text_layout.addWidget(self.summary)
 
+        # Size policies for flexibility
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.setMinimumHeight(200)  # Maintain a consistent height
+
+        # Apply styling
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget#newsEntryWidget {
@@ -401,6 +416,7 @@ class NewsEntryWidget(QWidget):
             }
         """)
 
+        # Thread pool for image download
         self.threadpool = QThreadPool()
         self.setAttribute(Qt.WA_AcceptTouchEvents)
         self.start_image_download(news_data["image_url"])
@@ -409,13 +425,11 @@ class NewsEntryWidget(QWidget):
         dt = datetime.fromisoformat(iso_date)
         return dt.strftime("%d/%m/%Y, %H:%M:%S")
 
-
     def start_image_download(self, image_url):
         if image_url in self.image_cache:
             self.handle_image_download(self.image_cache[image_url])
         else:
             worker = ImageDownloadWorker(image_url)
-            # print(f"Active threads: {self.threadpool.activeThreadCount()}")
             worker.signals.result.connect(self.handle_image_download)
             worker.signals.error.connect(self.handle_error)
             self.threadpool.start(worker)
@@ -443,7 +457,7 @@ class NewsEntryWidget(QWidget):
         cropped_pixmap = scaled_pixmap.copy(x_offset, y_offset, target_size.width(), target_size.height())
 
         self.image_label.setPixmap(cropped_pixmap)
-        self.image_cache[self.news_data["image_url"]] = image_data          # Cache the image data
+        self.image_cache[self.news_data["image_url"]] = image_data  # Cache the image data
 
     @Slot(str)
     def handle_error(self, error):
@@ -462,6 +476,7 @@ class NewsEntryWidget(QWidget):
                 webbrowser.open(self.news_data["url"])
         except Exception as e:
             print(f"An error occurred: {e}")
+
 
 
 class MplCanvas(FigureCanvas):
