@@ -1,6 +1,7 @@
 import sys
 import signal
 import schedule
+import os
 from PySide6.QtCore import Qt, QTimer, QEvent, Slot, QThreadPool, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QGridLayout, QPushButton, QHBoxLayout, QSizePolicy, QStackedWidget, QScrollArea, QScroller, QScrollerProperties
@@ -434,23 +435,44 @@ class RpiInterface:
         print("RpiInterface worker finished")
     
     def run_pending(self):
-        schedule.run_pending()
+        schedule.run_pending()  # Runs the scheduled tasks
+
+
+def restart_program():
+    print("Terminating and restarting...")
+    python = sys.executable                                      # Get the current Python interpreter
+    os.execv(python, ['python3'] + sys.argv)                     # Restart the program
+
+
+def run_all_pending():
+    """Runs both schedule and backlight pending tasks."""
+    schedule.run_pending()                  # Run all scheduled tasks
+    backlight.run_pending()                 # Run any pending tasks for backlight
 
 
 if __name__ == "__main__":
     backlight = RpiInterface()
-    # # Turn screen off at 11 PM and back on at 6 AM
+
+    # Turn screen off at 11 PM and back on at 6 AM
     schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
-    schedule.every().day.at("22:08").do(backlight.turn_brightness_down)             # Must change
+    schedule.every().day.at("10:30").do(backlight.turn_brightness_down)  # Must change
+    schedule.every().monday.at("00:00").do(restart_program)
 
     app = QApplication([])
-    signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC
+
+    # Signal handler for ESC to exit the app
+    signal.signal(signal.SIGINT, QApplication.quit)
+
+    # Setup the main widget for full screen display
     widget = MainWidget()
     widget.showFullScreen()
-    # widget.resize(800, 480)
     widget.show()
+
+    # Timer to run schedule and backlight tasks every second
     timer = QTimer()
-    timer.timeout.connect(backlight.run_pending)
-    timer.start(1000)
+    timer.timeout.connect(run_all_pending)                  # Connect both pending tasks in a single function
+    timer.start(1000)  
+
     sys.exit(app.exec())
+
  
