@@ -420,14 +420,14 @@ class RpiInterface:
 
     def adjust_brightness(self, screen_status):
         worker = RpiInterfaceWorker(screen_status=screen_status)
-        worker.signals.finsihed.connect(self.worker_finished)
-        self.threadpool.start()
+        worker.signals.finished.connect(self.worker_finished)
+        self.threadpool.start(worker)
 
     def turn_brightness_up(self):
-        self.adjust_brightness(screen_status=True)
+        self.adjust_brightness(screen_status=False)
     
     def turn_brightness_down(self):
-        self.adjust_brightness(screen_status=False)
+        self.adjust_brightness(screen_status=True)
     
     def worker_finished(self):
         print("RpiInterface worker finished")
@@ -440,7 +440,7 @@ if __name__ == "__main__":
     backlight = RpiInterface()
     # # Turn screen off at 11 PM and back on at 6 AM
     schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
-    schedule.every().day.at("22:00").do(backlight.turn_brightness_down)             # Must change
+    schedule.every().day.at("22:08").do(backlight.turn_brightness_down)             # Must change
 
     app = QApplication([])
     signal.signal(signal.SIGINT, QApplication.quit)     # Signal handler for ESC

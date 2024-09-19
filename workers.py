@@ -83,7 +83,9 @@ class ImageDownloadWorker(QRunnable):
         try:
             # print(f"ImageDownloadWorker thread started @ [{self.url}]")
             # Headers required for images from Wikimedia
-            headers = {'User-Agent': 'RpiSpaceDashboard/0.0 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}
+            if not self.url:
+                raise ValueError("ImageDownloadWorker: image URL is none")
+            headers = {'User-Agent': 'RpiSpaceDashboard/1.5 (https://github.com/blacknand/rpi-space-dashboard; nblackburndeveloper@icloud.com)'}            # Version 1.5 is not fully out
             print(f"downloading image from [{self.url[:50]}] (first 50 chars)")
             response = requests.get(self.url, headers=headers)
             response.raise_for_status()

@@ -201,14 +201,6 @@ class FooterButtonsWidget(QWidget):
         # End the painting process
         painter.end()
 
-
-
-
-
-
-
-
-
             
 class LaunchEntryWidget(QWidget):
     def __init__(self, launch_data):
