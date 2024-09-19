@@ -6,8 +6,8 @@ import sys
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from custom_widgets import ImageDownloadWorker
-from PySide6.QtCore import Slot, QThreadPool, QTimer, QTime, Qt
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QStackedLayout, QSizePolicy
+from PySide6.QtCore import Slot, QThreadPool, QTimer, QTime, Qt, QEvent
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QStackedLayout, QSizePolicy, QDialog, QApplication
 from PySide6.QtGui import QPixmap
 from workers import APODWorker, MockedTime
 
@@ -28,11 +28,12 @@ spec = importlib.util.spec_from_file_location(module_name, file_path)
 apod_object_parser = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(apod_object_parser)
 
+
+# TODO: prevent user from clicking on anything other than the widget
 class APODPopUpWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("APOD")
-        self.setFixedSize(400, 300) 
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(10, 10, 10, 10)
@@ -249,6 +250,8 @@ class ApodWidget(QWidget):
         if self.apod_title and self.apod_explaination:
             self.apod_popup_widget.update_content(self.apod_title, self.apod_explaination, self.apod_date)
         self.apod_popup_widget.show()
+
+
 
 
 class MarsImagesWidget(QWidget):

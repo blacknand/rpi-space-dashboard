@@ -337,6 +337,7 @@ class SpaceNewsWidget(QWidget):
         # Scrollable content area setup
         self.scroll_content = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_content)
+        self.scroll_layout.setSpacing(5)
         self.scroll_area.setWidget(self.scroll_content)
 
         # Add scroll area to the main layout

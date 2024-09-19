@@ -365,53 +365,59 @@ class NewsEntryWidget(QWidget):
 
         # Image label setup
         self.image_label = ClickableLabel(self)
-        self.image_label.setFixedSize(250, 180)
+        self.image_label.setFixedSize(250, 180)  # Same size as before
         self.image_label.setScaledContents(True)
         self.image_label.clicked.connect(self.open_url_in_browser)
 
         main_layout.addWidget(self.image_label)
 
-        # Info layout setup for text
-        text_layout = QVBoxLayout()
-        main_layout.addLayout(text_layout)
+        # Info layout setup for text, aligns vertically
+        info_layout = QVBoxLayout()
+        main_layout.addLayout(info_layout)
 
-        # Published date label
+        # Sub-layout for the date and news site to align them with the image
+        date_news_layout = QHBoxLayout()
+
+        # Published date label (aligned with the top of the image)
         published_date = self.convert_iso(news_data["published"])
         self.published = QLabel(published_date, self)
         self.published.setStyleSheet("color: black; font-size: 12px;")
-        text_layout.addWidget(self.published)
+        self.published.setAlignment(Qt.AlignTop)  # Ensures date aligns with the top of the image
+        date_news_layout.addWidget(self.published)
 
-        # News site label
+        # News site label (aligned with the top of the image)
         self.news_site = QLabel(news_data["news_site"], self)
         self.news_site.setStyleSheet("color: black; font-size: 12px;")
-        self.news_site.setAlignment(Qt.AlignRight)
-        text_layout.addWidget(self.news_site)
+        self.news_site.setAlignment(Qt.AlignTop | Qt.AlignRight)  # Align news agency to top and right
+        date_news_layout.addWidget(self.news_site)
 
-        # Title label
+        info_layout.addLayout(date_news_layout)  # Add this layout to the vertical info layout
+
+        # Title label (moved below date and news site)
         self.title = QLabel(news_data["title"], self)
-        self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
+        self.title.setStyleSheet("font-size: 16px; font-weight: bold; color: black; margin-top: 5px;")  # Added margin for spacing
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setWordWrap(True)
-        text_layout.addWidget(self.title)
+        info_layout.addWidget(self.title)
 
-        # Summary label
+        # Summary label (moved below title)
         self.summary = QLabel(news_data["summary"], self)
         self.summary.setStyleSheet("font-size: 14px; color: black;")
         self.summary.setWordWrap(True)
-        text_layout.addWidget(self.summary)
+        info_layout.addWidget(self.summary)
 
         # Size policies for flexibility
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        self.setMinimumHeight(200)  # Maintain a consistent height
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)  # Minimum instead of Fixed
 
-        # Apply styling
+        # Apply styling, added border-radius of 5%
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         self.setStyleSheet("""
             QWidget#newsEntryWidget {
                 background-color: #FFF; 
-                border-radius: 5%;
+                border-radius: 5%;  /* Border radius */
             }
             QWidget {
+                border-radius: 5%;  /* Border radius */
                 background-color: #FFF; 
             }
         """)
@@ -420,6 +426,7 @@ class NewsEntryWidget(QWidget):
         self.threadpool = QThreadPool()
         self.setAttribute(Qt.WA_AcceptTouchEvents)
         self.start_image_download(news_data["image_url"])
+
 
     def convert_iso(self, iso_date):
         dt = datetime.fromisoformat(iso_date)
