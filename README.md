@@ -6,27 +6,26 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 - NASA APOD: displays the Astronomoy Picture of the Day from NASA
 - Enviromental conditions dynamic graph: displays a graph for the highest temperature and humidity percentage for each hour, for 12 hours on the current day from 8 AM to 8 PM. The graph is updated dynamically every hour and then cleared at 12 AM
 - Featured space news articles: displays a list of 10 featured space articles with the title, publisher, date of publishing, a brief summary and a image which you can touch to bring up the article
+- Restarts dynamically: `interface.py` will end itself and then restart every monday at 12 AM so the app/Raspberry Pi can be left for truly 24/7 and it will never run out of memory
 ## Main display
-![dashboard-img](https://github.com/user-attachments/assets/45a48608-d647-4c10-94b5-a6ead63350a5)
+![main-display-readme](https://github.com/user-attachments/assets/26ba2eb0-96d9-48ec-908c-a41ac638623c)
 ## Upcoming rocket launches display
-![rockets-img](https://github.com/user-attachments/assets/2580a81f-7ad7-4794-b00a-b7dc30ab30b8)
+![rocket-display-readme](https://github.com/user-attachments/assets/7134d208-6d69-4b9d-9fd5-c9d7605ba61f)
 ## NASA APOD display
-![20240830_10h46m23s_grim (2)](https://github.com/user-attachments/assets/0943dfb0-3a94-4304-8089-9b8da13f44f3)
-![20240830_10h46m27s_grim](https://github.com/user-attachments/assets/d650552f-7391-4954-9d2d-e315e1fc00b4)
+![apod-display-readme](https://github.com/user-attachments/assets/b065e3b6-7c26-426f-a1fe-dca7ae76bcb1)
+![apod-explanation-readme](https://github.com/user-attachments/assets/cfe526be-e197-42fb-a65c-68e80f6c4a03)
 ## Enviromental conditions graph display
-![20240823_17h16m52s_grim](https://github.com/user-attachments/assets/e4afecc1-b9ca-460e-822b-2ffa08831719)
+
 ## Featured space news articles
-![space-news-image](https://github.com/user-attachments/assets/0ddd3ad8-b999-46dd-86d7-e146a4371540)
-![article-image](https://github.com/user-attachments/assets/deb35208-fb63-419f-8daf-1232d53e22eb)
+![news-article-readme](https://github.com/user-attachments/assets/6fcf1025-431d-4120-9550-8ffa588ff350)
+![news-article-widget-readme](https://github.com/user-attachments/assets/c685dc97-a16c-488a-a2b4-28dccbe8f3da)
 ## Hardware used
 - [BME280 I2C/SPI](https://learn.adafruit.com/adafruit-bme280-humidity-barometric-pressure-temperature-sensor-breakout/downloads)
 - [Rasberry Pi 4b](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
 - [Rasberry Pi 7 inch touchscreen display](https://www.raspberrypi.com/products/raspberry-pi-touch-display/)
 # To install
-SSH:   
-```git clone git@github.com:blacknand/rpi-space-dashboard.git```  
-HTTP:    
-```git clone https://github.com/blacknand/rpi-space-dashboard.git```  
+- SSH: `git clone git@github.com:blacknand/rpi-space-dashboard.git`     
+- HTTP: `git clone https://github.com/blacknand/rpi-space-dashboard.git`     
 Install all dependencies: ```pip install -r requirements.txt```  
 **Run app**
 - Linux/macOS: ```python3 interface.py```  
