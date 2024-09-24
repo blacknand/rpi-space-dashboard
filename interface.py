@@ -454,8 +454,8 @@ if __name__ == "__main__":
     backlight = RpiInterface()
 
     # Turn screen off at 11 PM and back on at 6 AM
-    schedule.every().day.at("06:00").do(backlight.turn_brightness_up)
-    schedule.every().day.at("10:30").do(backlight.turn_brightness_down)  # Must change
+    schedule.every().day.at("07:00").do(backlight.turn_brightness_up)
+    schedule.every().day.at("22:00").do(backlight.turn_brightness_down)  # Must change
     schedule.every().monday.at("00:00").do(restart_program)
 
     app = QApplication([])

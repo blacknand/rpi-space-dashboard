@@ -88,16 +88,12 @@ class ApodWidget(QWidget):
         self.download_button.setStyleSheet("""
             QPushButton {
                 border-radius: 15px;
-                background-color: #3498db;
-                color: white;
+                background-color: white;
+                color: black;
                 font-weight: bold;
-                border: 2px solid #2980b9;
             }
             QPushButton:hover {
-                background-color: #2980b9;
-            }
-            QPushButton:pressed {
-                background-color: #1abc9c;
+                background-color: white;
             }
         """)
         self.download_button.clicked.connect(self.show_apod_popup)
