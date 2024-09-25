@@ -15,7 +15,7 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 ![apod-display-readme](https://github.com/user-attachments/assets/b065e3b6-7c26-426f-a1fe-dca7ae76bcb1)
 ![apod-explanation-readme](https://github.com/user-attachments/assets/cfe526be-e197-42fb-a65c-68e80f6c4a03)
 ## Enviromental conditions graph display
-
+![20240925_18h49m07s_grim](https://github.com/user-attachments/assets/0d28bc8c-19e9-4a9f-933d-213a14c325da)
 ## Featured space news articles
 ![news-article-readme](https://github.com/user-attachments/assets/6fcf1025-431d-4120-9550-8ffa588ff350)
 ![news-article-widget-readme](https://github.com/user-attachments/assets/c685dc97-a16c-488a-a2b4-28dccbe8f3da)
@@ -26,7 +26,7 @@ A space themed dashboard designed for the Rasberry Pi 7 inch touchscreen, with t
 # To install
 - SSH: `git clone git@github.com:blacknand/rpi-space-dashboard.git`     
 - HTTP: `git clone https://github.com/blacknand/rpi-space-dashboard.git`     
-Install all dependencies: ```pip install -r requirements.txt```  
+Install all dependencies: ```pip install -r requirements.txt```      
 **Run app**
 - Linux/macOS: ```python3 interface.py```  
 - Windows: ```python interface.py```
